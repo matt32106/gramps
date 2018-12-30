@@ -1534,7 +1534,6 @@ class BasePage: # pylint: disable=C1001
                             hyper = Html("a", nav_text, href=url_fname, title=nav_text, inline=True)
                         else:
                             hyper = self.get_nav_menu_hyperlink(url_fname, nav_text)
-                        print("hyper :", hyper, url_fname, nav_text)
 
                         # Define 'currentsection' to correctly set navlink item
                         # CSS id 'CurrentSection' for Navigation styling.
