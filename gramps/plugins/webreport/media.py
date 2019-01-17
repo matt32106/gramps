@@ -12,10 +12,11 @@
 # Copyright (C) 2008-2011  Rob G. Healey <robhealey1@gmail.com>
 # Copyright (C) 2010       Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2010       Jakim Friant
-# Copyright (C) 2010-2017  Serge Noiraud
+# Copyright (C) 2010-      Serge Noiraud
 # Copyright (C) 2011       Tim G L Lyons
 # Copyright (C) 2013       Benny Malengier
 # Copyright (C) 2016       Allen Crider
+# Copyright (C) 2018       Theo van Rijn
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -214,12 +215,13 @@ class MediaPages(BasePage):
         output_file, sio = self.report.create_file("media")
         # save the media file name in case we create unused media pages
         self.cur_fname = self.report.cur_fname
-        medialistpage, head, body = self.write_header(self._('Media'))
+        result = self.write_header(self._('Media'))
+        medialistpage, head, body, outerwrapper = result
 
         ldatec = 0
         # begin gallery division
         with Html("div", class_="content", id="Gallery") as medialist:
-            body += medialist
+            outerwrapper += medialist
 
             msg = self._("This page contains an index of all the media objects "
                          "in the database, sorted by their title. Clicking on "
@@ -311,7 +313,8 @@ class MediaPages(BasePage):
                             Html("td", Html("h4", " "), inline=True)
                         )
                         for media_handle in self.unused_media_handles:
-                            media = self.r_db.get_media_from_handle(media_handle)
+                            gmfh = self.r_db.get_media_from_handle
+                            media = gmfh(media_handle)
                             gc.collect() # Reduce memory usage when many images.
                             if idx == total:
                                 next_ = None
@@ -338,7 +341,7 @@ class MediaPages(BasePage):
         # add footer section
         # add clearline for proper styling
         footer = self.write_footer(ldatec)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file
@@ -408,7 +411,7 @@ class MediaPages(BasePage):
         self.page_title = media.get_description()
         esc_page_title = html_escape(self.page_title)
         (mediapage, head,
-         body) = self.write_header("%s - %s" % (self._("Media"),
+         body, outerwrapper) = self.write_header("%s - %s" % (self._("Media"),
                                                 self.page_title))
 
         # if there are media rectangle regions, attach behaviour style sheet
@@ -421,7 +424,7 @@ class MediaPages(BasePage):
 
         # begin MediaDetail division
         with Html("div", class_="content", id="GalleryDetail") as mediadetail:
-            body += mediadetail
+            outerwrapper += mediadetail
 
             # media navigation
             with Html("div", id="GalleryNav", role="navigation") as medianav:
@@ -487,9 +490,8 @@ class MediaPages(BasePage):
                             url = self.report.build_url_fname(orig_image_path,
                                                               None, self.uplink)
                             with Html("div", id="GalleryDisplay",
-                                      style='width: %dpx; height: %dpx' % (
-                                          new_width,
-                                          new_height)) as mediadisplay:
+                                      style='width: %dpx; height: auto' % (
+                                          new_width)) as mediadisplay:
                                 summaryarea += mediadisplay
 
                                 # Feature #2634; display the mouse-selectable
@@ -520,9 +522,7 @@ class MediaPages(BasePage):
                                     url = self.report.build_url_fname(
                                         newpath, None, self.uplink)
                                 mediadisplay += Html("a", href=url) + (
-                                    Html("img", width=new_width,
-                                         height=new_height, src=url,
-                                         alt=esc_page_title)
+                                    Html("img", src=url, alt=esc_page_title)
                                 )
                     else:
                         dirname = tempfile.mkdtemp()
@@ -643,7 +643,7 @@ class MediaPages(BasePage):
         # add clearline for proper styling
         # add footer section
         footer = self.write_footer(ldatec)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file

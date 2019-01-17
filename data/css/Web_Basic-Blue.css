@@ -3,6 +3,8 @@
 # Gramps - a GTK+/GNOME based genealogy program
 #
 # Copyright (C) 2008-2011 Rob G. Healey <robhealey1@gmail.com>
+# Copyright (C) 2018      Theo van Rijn
+# Copyright (C) 2019      Serge Noiraud
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,6 +74,13 @@ img {
 .thumbnail a:hover {
     background: none;
 }
+#outerwrapper {
+    margin: 5px auto;
+    width: 98%;
+}
+#outerwrapper > div {
+    clear: both;
+}
 .content {
     background-color: #FFF;
     color: #000;
@@ -94,12 +103,22 @@ img {
     width: 96px;
     margin: 0 auto;
 }
+#ThumbnailPreview div.snapshot {
+    float: right;
+    margin: 0;
+}
 .fullclear {
     width: 100%;
     height: 1px;
     margin: 0;
     padding: 0;
     clear: both;
+}
+/* Less whitespace on smaller real estate. */
+@media only screen and (max-width: 1080px) {
+    .content {
+        padding: 0em 0.5em;
+    }
 }
 
 /* General Text
@@ -221,6 +240,57 @@ p#user_header {
     margin-right: 10px;
 }
 
+/* Navigation
+----------------------------------------------------- */
+/*
+div#nav, #subnavigation {
+    border: solid 1px #EEE; *//* needed by IE7 *//*
+}
+#subnavigation ul {
+    overflow: hidden;
+}
+div#nav ul, #subnavigation ul {
+    list-style: none;
+    margin: 0px;
+    padding-left: 15px;
+}
+#subnavigation ul {
+    border-bottom: solid 1px #999;
+}
+div#nav ul li, #subnavigation ul li {
+    float: left;
+    width: 10%;
+}
+div#nav ul li a, #subnavigation ul li a {
+    display: block;
+    font-size: smaller;
+
+    font-weight: bold;
+    padding: 5px;
+    border-bottom: solid 1px #EEE;
+}
+div#nav ul li a:hover, #subnavigation ul li a:hover {
+    text-decoration: none;
+    background-color: #CCC;
+    border-bottom: solid 1px black;
+
+
+}
+div#nav ul li.CurrentSection a {
+    position: relative;
+    top: 1px;
+    border: solid 1px #999;
+    border-bottom-style: none;
+    background-color: white;
+}
+*/
+
+/* Webcal
+----------------------------------------------------- */
+#subnavigation ul li.CurrentSection a {
+    background-color: white;
+
+}
 /* Footer
 ----------------------------------------------------- */
 div#footer {
@@ -268,6 +338,93 @@ div#footer p#copyright img {
     font: normal 1em/1.2em serif;
     margin: 0;
     padding: 0;
+}
+
+/* Responsive navigation */
+a.navIcon {
+    display: none;
+}
+
+div#header::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+div#nav::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+@media only screen and (max-width: 1080px) {
+
+    /* Use less & all realestate on mobiles. */
+    div#outerwrapper {
+        margin: 5px auto;
+        width: 100%;
+    }
+
+    .nav {
+        background: none; /* Works in IE too. */
+/*
+        width: 200px;
+        position: absolute;
+        z-index: 10;
+*/
+    }
+
+    /* Undo some of the #nav styles  - to enable the class .nav */
+    .nav ul, #subnavigation ul {
+        list-style: none;
+        min-width: unset;
+        width: 200px;
+        height: 32px;
+        margin: 0;
+        padding: 0;
+    }
+    .nav ul li, #subnavigation ul li {
+        float: unset;
+        display: unset
+    }
+
+    /* Start with hidden menu options */
+    /* .nav li:not(:first-child) {display: none;} */
+    .nav li {display: none;}
+    .nav ul {display: none;}
+
+    a.navIcon {
+        font-size:1.3em;
+        display: block;
+        margin: 0.1em 0.4em 0.4em 0.4em;
+        float: left;
+    }
+
+    .nav.responsive {position: absolute; display: block; z-index: 100;}
+    .nav.responsive a.icon {
+        /* position: absolute; */
+        right: 0;
+        top: 0;
+        margin-right: 10px;
+    }
+    .nav.responsive li {
+        /* float: left; */
+        display: block;
+        text-align: left;
+        background-color: #00029D;
+        /* required by IE */
+        float: left;
+        clear: both;
+        width: 200px;
+    }
+
+    div#nav ul, #subnavigation ul {
+        padding-left: 0px;
+    }
+
+    .content {
+        padding: 0em 0.5em;
+    }
 }
 
 /* Main Table
@@ -578,6 +735,26 @@ div#EventDetail table.eventlist tbody tr td.ColumnDate {
     margin: 0;
     padding: 0;
 }
+#gallery {
+    background-color: green;
+}
+#indivgallery {
+    background-color: white;
+}
+#gallery .gallerycell {
+    float: left;
+    width: 130px;
+    height: 150px;
+    text-align: center;
+    margin: 0;
+    background-color: white;
+    border-top: solid 1px #999;
+    border-right: solid 1px #999;
+}
+#gallery .thumbnail {
+    font-size: smaller;
+    margin: 3em auto;
+}
 #Gallery table.infolist tbody tr td {
     border-bottom: dashed 1px #000;
 }
@@ -627,7 +804,16 @@ div#EventDetail table.eventlist tbody tr td.ColumnDate {
 }
 #GalleryDisplay img {
     margin: 0 auto;
+    max-width: 800px;
+    height: auto;
 }
+
+@media only screen and (max-width: 1080px) {
+    #GalleryDisplay img {
+        max-width: 100%;
+    }
+}
+
 #GalleryDetail div#summaryarea{
     margin: 0;
     padding: 2em 0 0 0;
@@ -1094,6 +1280,7 @@ div.Residence table.infolist tr td {
     float: left;
     width: 130px;
     text-align: center;
+    background-color: white;
 }
 #indivgallery div.thumbnail a {
     display: block;
@@ -1116,6 +1303,43 @@ div.Residence table.infolist tr td {
     width: 80%;
     margin: 0 auto;
     padding: 0;
+}
+#gallery div.indexno {
+    float: right;
+    width: 1.8em;
+    font-size: large;
+    text-align: center;
+    background-color: #CCC;
+    color: #555;
+    margin: 0;
+}
+#indivgallery div.date {
+    float: right;
+    width: 1.8em;
+    font-size: large;
+    text-align: center;
+    background-color: #CCC;
+    color: #555;
+}
+#indivgallery .thumbnail ul {
+    font-size: smaller;
+    list-style: none;
+    padding: 0px;
+}
+#indivgallery .thumbnail ul li:first-child {
+    border-style: none;
+}
+#indivgallery .thumbnail ul li {
+    border-top: dashed 1px #CCC;
+    border-top-style: dashed;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+#gallery img {
+    border: solid 1px #999;
+}
+div.snapshot div.thumbnail {
+    text-align: center;
 }
 
 /* Subsections : Narrative

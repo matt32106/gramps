@@ -12,10 +12,11 @@
 # Copyright (C) 2008-2011  Rob G. Healey <robhealey1@gmail.com>
 # Copyright (C) 2010       Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2010       Jakim Friant
-# Copyright (C) 2010-2017  Serge Noiraud
+# Copyright (C) 2010-      Serge Noiraud
 # Copyright (C) 2011       Tim G L Lyons
 # Copyright (C) 2013       Benny Malengier
 # Copyright (C) 2016       Allen Crider
+# Copyright (C) 2018       Theo van Rijn
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,12 +176,13 @@ class PersonPages(BasePage):
         showparents = report.options['showparents']
 
         output_file, sio = self.report.create_file("individuals")
-        indlistpage, dummy_head, body = self.write_header(self._("Individuals"))
+        result = self.write_header(self._("Individuals"))
+        indlistpage, dummy_head, body, outerwrapper = result
         date = 0
 
         # begin Individuals division
         with Html("div", class_="content", id="Individuals") as individuallist:
-            body += individuallist
+            outerwrapper += individuallist
 
             # Individual List page message
             msg = self._("This page contains an index of all the individuals "
@@ -412,7 +414,7 @@ class PersonPages(BasePage):
         # create clear line for proper styling
         # create footer section
         footer = self.write_footer(date)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file
@@ -463,7 +465,8 @@ class PersonPages(BasePage):
 
         output_file, sio = self.report.create_file(person.get_handle(), "ppl")
         self.uplink = True
-        indivdetpage, head, body = self.write_header(self.sort_name)
+        result = self.write_header(self.sort_name)
+        indivdetpage, head, body, outerwrapper = result
 
         # attach the ancestortree style sheet if ancestor
         # graph is being created?
@@ -479,7 +482,7 @@ class PersonPages(BasePage):
         # begin individualdetail division
         with Html("div", class_="content",
                   id='IndividualDetail') as individualdetail:
-            body += individualdetail
+            outerwrapper += individualdetail
 
             # display a person's general data
             thumbnail, name, summary = self.display_ind_general()
@@ -606,7 +609,7 @@ class PersonPages(BasePage):
         # add clearline for proper styling
         # create footer section
         footer = self.write_footer(date)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file
@@ -624,7 +627,8 @@ class PersonPages(BasePage):
 
         output_file, sio = self.report.create_file(person.get_handle(), "maps")
         self.uplink = True
-        familymappage, head, body = self.write_header(self._("Family Map"))
+        result = self.write_header(self._("Family Map"))
+        familymappage, head, body, outerwrapper = result
 
         minx, maxx = Decimal("0.00000001"), Decimal("0.00000001")
         miny, maxy = Decimal("0.00000001"), Decimal("0.00000001")
@@ -781,7 +785,7 @@ class PersonPages(BasePage):
 
         # begin MapDetail division...
         with Html("div", class_="content", id="FamilyMapDetail") as mapdetail:
-            body += mapdetail
+            outerwrapper += mapdetail
 
             # add page title
             mapdetail += Html("h3",
@@ -916,7 +920,7 @@ class PersonPages(BasePage):
         # add clearline for proper styling
         # add footer section
         footer = self.write_footer(None)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file
@@ -946,7 +950,7 @@ class PersonPages(BasePage):
 
     def draw_box(self, node, col, person):
         """
-        draw the box around the AncestorTree Individual name box...
+        Draw the box around the AncestorTree Individual name box...
         @param: node   -- The node defining the box location
         @param: col    -- The generation number
         @param: person -- The person to set in the box

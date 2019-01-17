@@ -12,10 +12,11 @@
 # Copyright (C) 2008-2011  Rob G. Healey <robhealey1@gmail.com>
 # Copyright (C) 2010       Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2010       Jakim Friant
-# Copyright (C) 2010-2017  Serge Noiraud
+# Copyright (C) 2010-      Serge Noiraud
 # Copyright (C) 2011       Tim G L Lyons
 # Copyright (C) 2013       Benny Malengier
 # Copyright (C) 2016       Allen Crider
+# Copyright (C) 2018       Theo van Rijn
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -455,7 +456,7 @@ class NavWebReport(Report):
         if self.archive:
             self.archive.close()
 
-        if _WRONGMEDIAPATH:
+        if len(_WRONGMEDIAPATH) > 0:
             error = '\n'.join([
                 _('ID=%(grampsid)s, path=%(dir)s') % {
                     'grampsid' : x[0],
@@ -858,14 +859,12 @@ class NavWebReport(Report):
         @param: bkref_class   -- The class associated to this handle (source)
         @param: bkref_handle  -- The handle associated to this source
         """
-        if self.obj_dict[Source][source_handle]:
+        if len(self.obj_dict[Source][source_handle]) > 0:
             for bkref in self.bkref_dict[Source][source_handle]:
                 if bkref_handle == bkref[1]:
                     return
         source = self._db.get_source_from_handle(source_handle)
         source_name = source.get_title()
-        #if isinstance(source_name, bytes):
-        #    print("source name :", source_name)
         source_fname = self.build_url_fname(source_handle, "src",
                                             False) + self.ext
         self.obj_dict[Source][source_handle] = (source_fname, source_name,
@@ -895,7 +894,7 @@ class NavWebReport(Report):
         @param: bkref_class     -- The class associated to this handle
         @param: bkref_handle    -- The handle associated to this citation
         """
-        if self.obj_dict[Citation][citation_handle]:
+        if len(self.obj_dict[Citation][citation_handle]) > 0:
             for bkref in self.bkref_dict[Citation][citation_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -928,7 +927,7 @@ class NavWebReport(Report):
         @param: bkref_class  -- The class associated to this handle (media)
         @param: bkref_handle -- The handle associated to this media
         """
-        if self.obj_dict[Media][media_handle]:
+        if len(self.obj_dict[Media][media_handle]) > 0:
             for bkref in self.bkref_dict[Media][media_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -969,7 +968,7 @@ class NavWebReport(Report):
         @param: bkref_class  -- The class associated to this handle (source)
         @param: bkref_handle -- The handle associated to this source
         """
-        if self.obj_dict[Repository][repos_handle]:
+        if len(self.obj_dict[Repository][repos_handle]) > 0:
             for bkref in self.bkref_dict[Repository][repos_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -1465,7 +1464,7 @@ class NavWebReport(Report):
         """
         if self.usecms:
             to_dir = "/" + self.target_uri + "/" + to_dir
-        # LOG.debug("copying '%s' to '%s/%s'" % (from_fname, to_dir, to_fname))
+        LOG.debug("copying '%s' to '%s/%s'" % (from_fname, to_dir, to_fname))
         mtime = os.stat(from_fname).st_mtime
         if self.archive:
             def set_mtime(tarinfo):
@@ -1712,12 +1711,9 @@ class NavWebOptions(MenuReportOptions):
         addopt("ancestortree", self.__ancestortree)
         self.__ancestortree.connect('value-changed', self.__graph_changed)
 
-        self.__graphgens = NumberOption(_("Graph generations"), 4, 2, 10)
-        self.__graphgens.set_help(_("The number of generations to include in "
-                                    "the ancestor graph"))
-        addopt("graphgens", self.__graphgens)
-
-        self.__graph_changed()
+        self.__prevnext = BooleanOption(_("Add previous/next"), False)
+        self.__prevnext.set_help(_("Add previous/next to the navigation bar."))
+        addopt("prevnext", self.__prevnext)
 
         self.__securesite = BooleanOption(_("This is a secure site (https)"),
                                           False)
@@ -1775,6 +1771,13 @@ class NavWebOptions(MenuReportOptions):
         coordinates.set_help(
             _('Whether to display latitude/longitude in the places list?'))
         addopt("coordinates", coordinates)
+
+        self.__graphgens = NumberOption(_("Graph generations"), 4, 2, 10)
+        self.__graphgens.set_help(_("The number of generations to include in "
+                                    "the ancestor graph"))
+        addopt("graphgens", self.__graphgens)
+
+        self.__graph_changed()
 
     def __add_page_generation_options(self, menu):
         """

@@ -12,7 +12,7 @@
 # Copyright (C) 2008-2011  Rob G. Healey <robhealey1@gmail.com>
 # Copyright (C) 2010       Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2010       Jakim Friant
-# Copyright (C) 2010-2017  Serge Noiraud
+# Copyright (C) 2010-      Serge Noiraud
 # Copyright (C) 2011       Tim G L Lyons
 # Copyright (C) 2013       Benny Malengier
 # Copyright (C) 2016       Allen Crider
@@ -135,13 +135,14 @@ class RepositoryPages(BasePage):
         #inc_repos = self.report.options["inc_repository"]
 
         output_file, sio = self.report.create_file("repositories")
-        repolistpage, head, body = self.write_header(_("Repositories"))
+        result = self.write_header(_("Repositories"))
+        repolistpage, head, body, outerwrapper = result
 
         ldatec = 0
         # begin RepositoryList division
         with Html("div", class_="content",
                   id="RepositoryList") as repositorylist:
-            body += repositorylist
+            outerwrapper += repositorylist
 
             msg = self._("This page contains an index of "
                          "all the repositories in the "
@@ -199,7 +200,7 @@ class RepositoryPages(BasePage):
         # add clearline for proper styling
         # add footer section
         footer = self.write_footer(ldatec)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file
@@ -220,12 +221,13 @@ class RepositoryPages(BasePage):
 
         output_file, sio = self.report.create_file(handle, 'repo')
         self.uplink = True
-        repositorypage, head, body = self.write_header(_('Repositories'))
+        result = self.write_header(_('Repositories'))
+        repositorypage, head, body, outerwrapper = result
 
         # begin RepositoryDetail division and page title
         with Html("div", class_="content",
                   id="RepositoryDetail") as repositorydetail:
-            body += repositorydetail
+            outerwrapper += repositorydetail
 
             # repository name
             repositorydetail += Html("h3", html_escape(repo.name),
@@ -281,7 +283,7 @@ class RepositoryPages(BasePage):
         # add clearline for proper styling
         # add footer section
         footer = self.write_footer(ldatec)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send page out for processing
         # and close the file

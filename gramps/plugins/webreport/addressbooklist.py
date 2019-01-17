@@ -12,7 +12,7 @@
 # Copyright (C) 2008-2011  Rob G. Healey <robhealey1@gmail.com>
 # Copyright (C) 2010       Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2010       Jakim Friant
-# Copyright (C) 2010-2017  Serge Noiraud
+# Copyright (C) 2010-      Serge Noiraud
 # Copyright (C) 2011       Tim G L Lyons
 # Copyright (C) 2013       Benny Malengier
 # Copyright (C) 2016       Allen Crider
@@ -78,12 +78,13 @@ class AddressBookListPage(BasePage):
         output_file, sio = self.report.create_file("addressbook")
 
         # Add xml, doctype, meta and stylesheets
-        addressbooklistpage, head, body = self.write_header(_("Address Book"))
+        result = self.write_header(_("Address Book"))
+        addressbooklistpage, head, body, outerwrapper = result
 
         # begin AddressBookList division
         with Html("div", class_="content",
                   id="AddressBookList") as addressbooklist:
-            body += addressbooklist
+            outerwrapper += addressbooklist
 
             # Address Book Page message
             msg = _("This page contains an index of all the individuals in "
@@ -163,7 +164,7 @@ class AddressBookListPage(BasePage):
 
         # Add footer and clearline
         footer = self.write_footer(None)
-        body += (FULLCLEAR, footer)
+        outerwrapper += (FULLCLEAR, footer)
 
         # send the page out for processing
         # and close the file
