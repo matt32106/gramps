@@ -242,9 +242,9 @@ p#user_header {
 
 /* Navigation
 ----------------------------------------------------- */
-/*
 div#nav, #subnavigation {
-    border: solid 1px #EEE; *//* needed by IE7 *//*
+    border: solid 1px #EEE; /* needed by IE7 */
+    background-color: #13A926;
 }
 #subnavigation ul {
     overflow: hidden;
@@ -259,12 +259,10 @@ div#nav ul, #subnavigation ul {
 }
 div#nav ul li, #subnavigation ul li {
     float: left;
-    width: 10%;
 }
 div#nav ul li a, #subnavigation ul li a {
     display: block;
     font-size: smaller;
-
     font-weight: bold;
     padding: 5px;
     border-bottom: solid 1px #EEE;
@@ -273,8 +271,6 @@ div#nav ul li a:hover, #subnavigation ul li a:hover {
     text-decoration: none;
     background-color: #CCC;
     border-bottom: solid 1px black;
-
-
 }
 div#nav ul li.CurrentSection a {
     position: relative;
@@ -283,14 +279,16 @@ div#nav ul li.CurrentSection a {
     border-bottom-style: none;
     background-color: white;
 }
-*/
+#nav ul li.CurrentSection a:hover {
+    background-color: #903;
+}
 
 /* Webcal
 ----------------------------------------------------- */
 #subnavigation ul li.CurrentSection a {
     background-color: white;
-
 }
+
 /* Footer
 ----------------------------------------------------- */
 div#footer {
@@ -349,6 +347,42 @@ div#header::after {
     content: "";
     clear: both;
     display: table;
+}
+
+/* Alphabet Navigation
+----------------------------------------------------- */
+div#alphanav {
+    background-color: #EEE;
+}
+div#alphanav ul {
+    list-style: none;
+    border-width: 2px 0px 4px 0px;
+    border-style: solid;
+    border-color: black;
+    margin: 0px;
+    padding-left: 15px;
+    /* float container stretch, see www.quirksmode.org/css/clearing.html */
+    overflow: hidden;
+}
+div#alphanav ul li {
+    float: left;
+    font-size: larger;
+    font-weight: bold;
+}
+div#alphanav ul li:after {
+    content: " |";
+}
+div#alphanav ul li a {
+    display: block;
+    padding: 4px 8px;
+    line-height: 100%;
+    float: left;
+
+}
+div#alphanav ul li a:hover {
+    text-decoration: none;
+    background-color: black;
+    color: white;
 }
 
 div#nav::after {
@@ -411,7 +445,7 @@ div#nav::after {
         /* float: left; */
         display: block;
         text-align: left;
-        background-color: #00029D;
+        background-color: #13A926;
         /* required by IE */
         float: left;
         clear: both;
