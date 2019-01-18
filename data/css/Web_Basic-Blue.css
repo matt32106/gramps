@@ -899,48 +899,51 @@ body#ThumbnailPreview div#references table.infolist tbody tr td.ColumnName {
 /* Contact
 ------------------------------------------------- */
 #Contact #summaryarea {
-    width: 500px;
-    margin: 0 auto;
-    padding: 3em;
     border: double 4px #000;
     background-color: #BCEAF6;
 }
-#Contact #summaryarea img {
+#Contact #summaryarea #GalleryDisplay img {
     float: right;
     margin: 0;
 }
-#researcher {
+@media only screen and (max-width: 1080px) {
+    #Contact, #Contact #summaryarea #researcher,
+    #Contact #summaryarea #GalleryDisplay img {
+        max-width: 100%;
+    }
+}
+
+#Contact #summaryarea #researcher {
     font: normal 1.5em/1.4em serif;
     margin-top: .3em;
 }
-#researcher h3 {
+#Contact #summaryarea #researcher h3 {
     font: normal 1.2em/1.4em serif;
     padding: 0;
     text-align: left;
 }
-#researcher span {
-    float: left;
+#Contact #summaryarea #researcher span {
     display: block;
     font: normal .9em/1.4em serif;
     margin-right: .4em;
 }
-#streetaddress {
+#Contact #summaryarea #streetaddress {
     width: 100%;
 }
-#locality, .locality {
+#Contact #summaryarea #locality, .locality {
     display: block;
     width: 100%;
 }
-#city:after {
+#Contact #summaryarea #city:after {
     content: ",";
 }
-#country {
+#Contact #summaryarea #country {
     clear: left;
 }
-#email {
+#Contact #summaryarea #email {
     clear: left;
 }
-#email a {
+#Contact #summaryarea #email a {
     text-decoration: none;
 }
 
@@ -1033,13 +1036,14 @@ div#AddressBookList table.addressbook tbody tr td.ColumnWebLinks {
 
 /* Subsections
 ----------------------------------------------------- */
-#Home #GalleryDisplay, #Introduction #GalleryDisplay, #Contact #GalleryDisplay {
+#Home #GalleryDisplay, #Introduction #GalleryDisplay,
+                       #Contact #GalleryDisplay {
     float: right;
     margin: 0;
     border: 0px;
 }
 #Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
-      #Contact #GalleryDisplay img {
+                       #Contact #GalleryDisplay img {
     display: block;
     max-width: 950px;
     height: auto;

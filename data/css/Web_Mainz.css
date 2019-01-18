@@ -491,7 +491,7 @@ div#SourceDetail {
     padding-bottom: 0px;
     margin: 0px;
 }
-#Contact img {
+#Contact #summaryarea #GalleryDisplay img {
     display: block;
     margin: 0px auto 1em auto;
     border: solid 1px #7D5925;

@@ -538,13 +538,10 @@ div#SourceDetail {
     overflow: hidden;
 }
 #Contact #summaryarea {
-    width: 40em;
-    margin: 2em auto;
-    padding: 3em;
     background-color: #EAEEF4;
     border: solid 1px #7CA3DD;
 }
-#Contact img {
+#Contact #summaryarea #GalleryDisplay img {
     float: right;
     border: solid 1px #7CA3DD;
 }

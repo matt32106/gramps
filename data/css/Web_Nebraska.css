@@ -800,7 +800,6 @@ body#ThumbnailPreview div#references table.infolist tbody tr td.ColumnName {
 /* Contact
 ----------------------------------------------------- */
 #Contact #summaryarea {
-    width:500px;
     margin:0 auto;
     padding:3em;
     background-color:#F1ECE2;
@@ -818,7 +817,6 @@ body#ThumbnailPreview div#references table.infolist tbody tr td.ColumnName {
     padding:0;
 }
 #researcher span {
-    float:left;
     display:block;
     font:normal .9em/1.4em serif;
     margin-right:.4em;

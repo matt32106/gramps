@@ -499,13 +499,10 @@ div#SourceDetail {
     overflow: hidden;
 }
 #Contact #summaryarea {
-    width: 50em;
-    margin: 2em auto;
-    padding: 3em;
     background-color: #EEE;
     border: solid 1px #999;
 }
-#Contact img {
+#Contact #GalleryDisplay img {
     float: right;
     border: solid 1px #999;
 }
@@ -519,6 +516,12 @@ div#SourceDetail {
 #Contact #city:after {
     content: ",";
 }
+@media only screen and (max-width: 1080px) {
+    #Contact,
+    #Contact #GalleryDisplay img {
+        max-width: 100%;
+    }
+}
 
 /* Download
 ----------------------------------------------------- */
@@ -528,12 +531,11 @@ div#SourceDetail {
 
 /* Subsection
 ----------------------------------------------------- */
-#Home #GalleryDisplay, #Introduction #GalleryDisplay, #Contact #GalleryDisplay {
+#Home #GalleryDisplay, #Introduction #GalleryDisplay {
     float: right;
     margin: 1em;
 }
-#Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
-      #Contact #GalleryDisplay img {
+#Home #GalleryDisplay img, #Introduction #GalleryDisplay img {
     display: block;
     max-width: 950px;
     height: auto;
