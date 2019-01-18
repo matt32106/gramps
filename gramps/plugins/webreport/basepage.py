@@ -1478,6 +1478,11 @@ class BasePage: # pylint: disable=C1001
         else:
             outerwrapperdiv += self.display_nav_links(title)
 
+        # message for Codacy :
+        # body is used in some modules to add functions like onload(),
+        # initialize(), ...
+        # some modules doesn't need that, so body is an unused variable
+        # in these modules.
         # return page, head, and body to its classes...
         return page, head, body, outerwrapperdiv
 

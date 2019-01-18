@@ -167,36 +167,14 @@ class MediaPages(BasePage):
                     gc.collect() # Reduce memory usage when many images.
                     if index == media_count:
                         next_ = None
-                    elif index < total:
-                        next_ = sorted_media_handles[index]
-                    elif len(self.unused_media_handles) > 0:
-                        next_ = self.unused_media_handles[0]
                     else:
-                        next_ = None
-                    self.mediapage(self.report, title,
-                                   handle, (prev, next_, index, media_count))
-                    prev = handle
+                        next_ = self.unused_media_handles[idx]
+                    self.mediapage(self.report, title, media_handle,
+                                   (prev, next_, index, media_count))
+                    prev = media_handle
                     step()
                     index += 1
-
-                total = len(self.unused_media_handles)
-                idx = 1
-                prev = sorted_media_handles[len(sorted_media_handles)-1]
-                if total > 0:
-                    for media_handle in self.unused_media_handles:
-                        media = self.r_db.get_media_from_handle(media_handle)
-                        gc.collect() # Reduce memory usage when many images.
-                        if index == media_count:
-                            next_ = None
-                        else:
-                            next_ = self.unused_media_handles[idx]
-                        self.mediapage(self.report, title,
-                                       media_handle,
-                                       (prev, next_, index, media_count))
-                        prev = media_handle
-                        step()
-                        index += 1
-                        idx += 1
+                    idx += 1
 
         self.medialistpage(self.report, title, sorted_media_handles)
 
@@ -410,9 +388,9 @@ class MediaPages(BasePage):
         self.copy_thumbnail(media_handle, media)
         self.page_title = media.get_description()
         esc_page_title = html_escape(self.page_title)
-        (mediapage, head,
-         body, outerwrapper) = self.write_header("%s - %s" % (self._("Media"),
+        result = self.write_header("%s - %s" % (self._("Media"),
                                                 self.page_title))
+        mediapage, head, body, outerwrapper = result
 
         # if there are media rectangle regions, attach behaviour style sheet
         if _region_items:
