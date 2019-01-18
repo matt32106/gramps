@@ -82,7 +82,7 @@ class IntroductionPage(BasePage):
         with Html("div", class_="content", id="Introduction") as section:
             outerwrapper += section
 
-            introimg = self.add_image('introimg')
+            introimg = self.add_image('introimg', head)
             if introimg is not None:
                 section += introimg
 

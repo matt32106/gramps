@@ -81,7 +81,7 @@ class HomePage(BasePage):
         with Html("div", class_="content", id="Home") as section:
             outerwrapper += section
 
-            homeimg = self.add_image('homeimg')
+            homeimg = self.add_image('homeimg', head)
             if homeimg is not None:
                 section += homeimg
 

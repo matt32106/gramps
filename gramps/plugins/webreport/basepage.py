@@ -1709,9 +1709,10 @@ class BasePage: # pylint: disable=C1001
             navigation += container
         return navigation
 
-    def add_image(self, option_name, height=0):
+    def add_image(self, option_name, head, height=0):
         """
         Will add an image (if present) to the page
+        If this image contains regions, try to add them.
 
         @param: option_name -- The name of the report option
         @param: height      -- Height of the image
@@ -1721,6 +1722,16 @@ class BasePage: # pylint: disable=C1001
             obj = self.r_db.get_media_from_gramps_id(pic_id)
             if obj is None:
                 return None
+            # get media rectangles
+            _region_items = self.media_ref_rect_regions(obj.get_handle(),
+                                                        linkurl=self.uplink)
+
+            # if there are media rectangle regions, attach behaviour style sheet
+            if _region_items:
+                fname = "/".join(["css", "behaviour.css"])
+                url = self.report.build_url_fname(fname, None, self.uplink)
+                head += Html("link", href=url, type="text/css",
+                             media="screen", rel="stylesheet")
             mime_type = obj.get_mime_type()
             if mime_type and mime_type.startswith("image"):
                 try:
@@ -1730,16 +1741,39 @@ class BasePage: # pylint: disable=C1001
                         self.r_db, obj.get_path()), newpath)
 
                     # begin image
-                    image = Html("img")
-                    image.attr = ''
-                    if height:
-                        image.attr += 'height = "%d"'  % height
+                    with Html("div", id="GalleryDisplay",
+                                   style='width: auto; height: auto') as image:
+                        if _region_items:
+                            # add all regions and links to persons
+                            regions = Html("ol", class_="RegionBox")
+                            while len(_region_items) > 0:
+                                (name, coord_x, coord_y,
+                                 width, height, linkurl
+                                ) = _region_items.pop()
+                                regions += Html(
+                                    "li",
+                                    style="left:%d%%; "
+                                          "top:%d%%; "
+                                          "width:%d%%; "
+                                          "height:%d%%;" % (
+                                              coord_x, coord_y,
+                                              width, height)) + (
+                                                  Html("a", name,
+                                                       href=linkurl)
+                                                  )
+                            image += regions
 
-                    descr = html_escape(obj.get_description())
-                    newpath = self.report.build_url_fname(newpath)
-                    image.attr += ' src = "%s" alt = "%s"' % (newpath, descr)
+                        # add image
+                        imag = Html("img")
+                        imag.attr = ''
+                        if height:
+                            imag.attr += 'height = "%d"'  % height
 
-                    # return an image
+                        descr = html_escape(obj.get_description())
+                        newpath = self.report.build_url_fname(newpath)
+                        imag.attr += ' src = "%s" alt = "%s"' % (newpath, descr)
+                        image += imag
+
                     return image
 
                 except (IOError, OSError) as msg:
@@ -1749,7 +1783,7 @@ class BasePage: # pylint: disable=C1001
         # no image to return
         return None
 
-    def media_ref_rect_regions(self, handle):
+    def media_ref_rect_regions(self, handle, linkurl=True):
         """
         Gramps feature #2634 -- attempt to highlight subregions in media
         objects and link back to the relevant web page.
@@ -1785,7 +1819,7 @@ class BasePage: # pylint: disable=C1001
                                  self._("Unknown")
                                 )
                         _linkurl = self.report.build_url_fname_html(_obj.handle,
-                                                                    "ppl", True)
+                                                                    "ppl", linkurl)
             elif classname == "Family":
                 _obj = self.r_db.get_family_from_handle(newhandle)
                 partner1_handle = _obj.get_father_handle()
@@ -1915,7 +1949,8 @@ class BasePage: # pylint: disable=C1001
                     # probably too small to see, and third, on the thumbnail,
                     # the link is shown above the image (which is pretty
                     # useless!)
-                    _region_items = self.media_ref_rect_regions(photo_handle)
+                    _region_items = self.media_ref_rect_regions(photo_handle,
+                                                                linkurl=False)
                     if len(_region_items):
                         with Html("div", id="GalleryDisplay") as mediadisplay:
                             snapshot += mediadisplay

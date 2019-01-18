@@ -85,7 +85,7 @@ class ContactPage(BasePage):
             with Html("div", id='summaryarea') as summaryarea:
                 section += summaryarea
 
-                contactimg = self.add_image('contactimg', 200)
+                contactimg = self.add_image('contactimg', head, 200)
                 if contactimg is not None:
                     summaryarea += contactimg
 

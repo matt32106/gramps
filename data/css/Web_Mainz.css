@@ -517,14 +517,21 @@ div#SourceDetail {
 
 /* SubSection
 -----------------------------------------------------------------*/
-#Home img, #Introduction img {
+#Home #GalleryDisplay, #Introduction #GalleryDisplay, #Contact #GalleryDisplay {
+    float: right;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+#Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+      #Contact #GalleryDisplay {
     display: block;
-    margin: 1em auto;
     max-width: 950px;
     height: auto;
+    float: right;
 }
 @media only screen and (max-width: 1080px) {
-    #Home img, #Introduction img {
+    #Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+          #Contact #GalleryDisplay {
         margin: 0 auto;
         max-width: 100%;
     }

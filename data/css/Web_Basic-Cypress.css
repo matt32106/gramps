@@ -583,13 +583,24 @@ div#SourceDetail {
 
 /* Subsection
 ----------------------------------------------------- */
-#Home, #Introduction {
-    overflow: hidden;
-}
-#Home img, #Introduction img {
+#Home #GalleryDisplay, #Introduction #GalleryDisplay, #Contact #GalleryDisplay {
     float: right;
-    margin: 1em;
+    margin: 0;
+    border: 0px;
+}
+#Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+      #Contact #GalleryDisplay img {
+    display: block;
     max-width: 950px;
+    height: auto;
+    float: right;
+}
+@media only screen and (max-width: 1080px) {
+    #Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+          #Contact #GalleryDisplay img {
+        margin: 0 auto;
+        max-width: 100%;
+    }
 }
 #Home p, #Introduction p {
     padding-left: 15px;

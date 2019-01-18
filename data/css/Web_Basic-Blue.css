@@ -999,16 +999,27 @@ div#AddressBookList table.addressbook tbody tr td.ColumnWebLinks {
 
 /* Subsections
 ----------------------------------------------------- */
-#Home, #Introduction, #Contact {
-    padding: 2em 0 3em 0;
+#Home #GalleryDisplay, #Introduction #GalleryDisplay, #Contact #GalleryDisplay {
+    float: right;
+    margin: 0;
+    border: 0px;
+}
+#Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+      #Contact #GalleryDisplay img {
+    display: block;
+    max-width: 950px;
+    height: auto;
+    float: right;
+}
+@media only screen and (max-width: 1080px) {
+    #Home #GalleryDisplay img, #Introduction #GalleryDisplay img,
+          #Contact #GalleryDisplay img {
+        margin: 0 auto;
+        max-width: 100%;
+    }
 }
 #Home p, #Introduction p {
     margin: 0 20px 1em 20px;
-}
-#Home img, #Introduction img {
-    float: right;
-    margin: 0;
-    padding: 0 20px 3em 2em;
 }
 #Home a, #Introduction a, #Contact a {
     color: #000;
