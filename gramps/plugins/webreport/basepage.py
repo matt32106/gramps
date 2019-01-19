@@ -1777,7 +1777,19 @@ class BasePage: # pylint: disable=C1001
                         descr = html_escape(obj.get_description())
                         newpath = self.report.build_url_fname(newpath)
                         imag.attr += ' src = "%s" alt = "%s"' % (newpath, descr)
-                        image += imag
+                        fname = self.report.build_url_fname(obj.get_handle(),
+                                                            "img",
+                                                            False) + self.ext
+                        #image += imag
+                        inc_gallery = self.report.options['gallery']
+                        if not self.create_thumbs_only and inc_gallery:
+                            img_link = Html("a", href=fname, title=descr) + (
+                                Html("img", src=newpath, alt=descr))
+                        else:
+                            # We can't show the image html page.
+                            # This page doesn't exist.
+                            img_link = Html("img", src=newpath, alt=descr)
+                        image += img_link
 
                     return image
 

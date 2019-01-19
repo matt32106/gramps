@@ -224,8 +224,8 @@ class SourcePages(BasePage):
 
         output_file, sio = self.report.create_file(source_handle, "src")
         self.uplink = True
-        result = self.write_header( "%s - %s" % (self._('Sources'),
-                                                 self.page_title))
+        result = self.write_header("%s - %s" % (self._('Sources'),
+                                                self.page_title))
         sourcepage, head, body, outerwrapper = result
 
         ldatec = 0
