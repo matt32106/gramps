@@ -128,7 +128,7 @@ class SourcePages(BasePage):
 
         output_file, sio = self.report.create_file("sources")
         result = self.write_header(self._("Sources"))
-        sourcelistpage, head, body, outerwrapper = result
+        sourcelistpage, head, body_, outerwrapper = result
 
         # begin source list division
         with Html("div", class_="content", id="Sources") as sourceslist:
@@ -226,7 +226,7 @@ class SourcePages(BasePage):
         self.uplink = True
         result = self.write_header("%s - %s" % (self._('Sources'),
                                                 self.page_title))
-        sourcepage, head, body, outerwrapper = result
+        sourcepage, head, body_, outerwrapper = result
 
         ldatec = 0
         # begin source detail division

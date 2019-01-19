@@ -75,7 +75,7 @@ class HomePage(BasePage):
         ldatec = 0
 
         output_file, sio = self.report.create_file("index")
-        homepage, head, body, outerwrapper = self.write_header(self._('Home'))
+        homepage, head, body_, outerwrapper = self.write_header(self._('Home'))
 
         # begin home division
         with Html("div", class_="content", id="Home") as section:

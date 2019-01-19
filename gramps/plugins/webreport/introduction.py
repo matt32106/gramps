@@ -76,7 +76,7 @@ class IntroductionPage(BasePage):
 
         output_file, sio = self.report.create_file(report.intro_fname)
         result = self.write_header(self._('Introduction'))
-        intropage, head, body, outerwrapper = result
+        intropage, head, body_, outerwrapper = result
 
         # begin Introduction division
         with Html("div", class_="content", id="Introduction") as section:

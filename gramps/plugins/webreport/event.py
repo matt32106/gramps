@@ -139,7 +139,7 @@ class EventPages(BasePage):
 
         output_file, sio = self.report.create_file("events")
         result = self.write_header(self._("Events"))
-        eventslistpage, head, body, outerwrapper = result
+        eventslistpage, head, body_, outerwrapper = result
 
         # begin events list  division
         with Html("div", class_="content", id="EventList") as eventlist:
@@ -364,7 +364,7 @@ class EventPages(BasePage):
 
         output_file, sio = self.report.create_file(event_handle, "evt")
         result = self.write_header(self._("Events"))
-        eventpage, head, body, outerwrapper = result
+        eventpage, head, body_, outerwrapper = result
 
         # start event detail division
         with Html("div", class_="content", id="EventDetail") as eventdetail:
