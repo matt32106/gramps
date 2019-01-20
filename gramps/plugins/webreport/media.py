@@ -468,8 +468,8 @@ class MediaPages(BasePage):
                             url = self.report.build_url_fname(orig_image_path,
                                                               None, self.uplink)
                             with Html("div", id="GalleryDisplay",
-                                      style='width: %dpx; height: auto' % (
-                                          new_width)) as mediadisplay:
+                                      style='max-width: %dpx; height: auto' % (
+                                          max_width)) as mediadisplay:
                                 summaryarea += mediadisplay
 
                                 # Feature #2634; display the mouse-selectable
