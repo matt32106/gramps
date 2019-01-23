@@ -30,9 +30,11 @@ Provide the base classes for GRAMPS' DataView classes
 #
 #----------------------------------------------------------------
 from abc import abstractmethod
+import os
 import pickle
 import time
 import logging
+from collections import deque
 
 LOG = logging.getLogger('.gui.listview')
 
@@ -54,7 +56,7 @@ from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.sgettext
 from .pageview import PageView
 from .navigationview import NavigationView
-from ..actiongroup import ActionGroup
+from ..uimanager import ActionGroup
 from ..columnorder import ColumnOrder
 from gramps.gen.config import config
 from gramps.gen.errors import WindowActiveError, FilterError, HandleError
@@ -63,7 +65,8 @@ from ..widgets.menuitem import add_menuitem
 from gramps.gen.const import CUSTOM_FILTERS
 from gramps.gen.utils.debug import profile
 from gramps.gen.utils.string import data_recover_msg
-from ..dialog import QuestionDialog, QuestionDialog2, ErrorDialog
+from gramps.gen.plug import CATEGORY_QR_PERSON
+from ..dialog import QuestionDialog, QuestionDialog3, ErrorDialog
 from ..editors import FilterEditor
 from ..ddtargets import DdTargets
 from ..plug.quick import create_quickreport_menu, create_web_connect_menu
@@ -121,6 +124,8 @@ class ListView(NavigationView):
         self.generic_filter = None
         dbstate.connect('database-changed', self.change_db)
         self.connect_signals()
+        self.at_popup_action = None
+        self.at_popup_menu = None
 
     def no_database(self):
         ## TODO GTK3: This is never called!! Dbguielement disconnects
@@ -167,11 +172,6 @@ class ListView(NavigationView):
                                     [self.drag_dest_info().target()],
                                     Gdk.DragAction.MOVE |
                                     Gdk.DragAction.COPY)
-            tglist = Gtk.TargetList.new([])
-            tglist.add(self.drag_dest_info().atom_drag_type,
-                       self.drag_dest_info().target_flags,
-                       self.drag_dest_info().app_id)
-            self.list.drag_dest_set_target_list(tglist)
 
         scrollwindow = Gtk.ScrolledWindow()
         scrollwindow.set_policy(Gtk.PolicyType.AUTOMATIC,
@@ -205,26 +205,27 @@ class ListView(NavigationView):
 
         NavigationView.define_actions(self)
 
-        self.edit_action = ActionGroup(name=self.title + '/ChangeOrder')
+        self.edit_action = ActionGroup(name=self.title + '/Edits')
         self.edit_action.add_actions([
-                ('Add', 'list-add', _("_Add..."), "<PRIMARY>Insert",
-                    self.ADD_MSG, self.add),
-                ('Remove', 'list-remove', _("_Delete"), "<PRIMARY>Delete",
-                    self.DEL_MSG, self.remove),
-                ('Merge', 'gramps-merge', _('_Merge...'), None,
-                    self.MERGE_MSG, self.merge),
-                ('ExportTab', None, _('Export View...'), None, None,
-                    self.export),
-                ])
+            ('Add', self.add, '<Primary>Insert'),
+            ('Remove', self.remove, '<Primary>Delete'),
+            ('PRIMARY-BackSpace', self.remove, '<PRIMARY>BackSpace'),
+            ('Merge', self.merge), ])
 
         self._add_action_group(self.edit_action)
+        self.action_list.extend([
+            ('ExportTab', self.export),
+            ('Edit', self.edit, '<Primary>Return'),
+            ('PRIMARY-J', self.jump, '<PRIMARY>J'),
+            ('FilterEdit', self.filter_editor)])
 
-        self._add_action('Edit', 'gtk-edit', _("action|_Edit..."),
-                         accel="<PRIMARY>Return",
-                         tip=self.EDIT_MSG,
-                         callback=self.edit)
-
-    def build_columns(self):
+    def build_columns(self, preserve_col=True):
+        """
+        build the columns
+        """
+        # Preserve the column widths if rebuilding the view.
+        if self.columns and preserve_col:
+            self.save_column_info()
         list(map(self.list.remove_column, self.columns))
 
         self.columns = []
@@ -290,7 +291,7 @@ class ListView(NavigationView):
         Called when the page is displayed.
         """
         NavigationView.set_active(self)
-        self.uistate.viewmanager.tags.tag_enable()
+        self.uistate.viewmanager.tags.tag_enable(update_menu=False)
         self.uistate.show_filter_results(self.dbstate,
                                          self.model.displayed(),
                                          self.model.total())
@@ -302,10 +303,7 @@ class ListView(NavigationView):
         NavigationView.set_inactive(self)
         self.uistate.viewmanager.tags.tag_disable()
 
-    def __build_tree(self):
-        profile(self._build_tree)
-
-    def build_tree(self, force_sidebar=False):
+    def build_tree(self, force_sidebar=False, preserve_col=True):
         if self.active:
             cput0 = time.clock()
             if not self.search_bar.is_visible():
@@ -334,7 +332,7 @@ class ListView(NavigationView):
                                 parent=self.uistate.window)
 
             cput1 = time.clock()
-            self.build_columns()
+            self.build_columns(preserve_col)
             cput2 = time.clock()
             self.list.set_model(self.model)
             cput3 = time.clock()
@@ -371,7 +369,7 @@ class ListView(NavigationView):
         """
         return 'gramps-tree-list'
 
-    def filter_editor(self, obj):
+    def filter_editor(self, *obj):
         try:
             FilterEditor(self.FILTER_TYPE , CUSTOM_FILTERS,
                          self.dbstate, self.uistate)
@@ -440,7 +438,7 @@ class ListView(NavigationView):
             self.uistate.push_message(self.dbstate,
                                       _("Active object not visible"))
 
-    def add_bookmark(self, obj):
+    def add_bookmark(self, *obj):
         mlist = []
         self.selection.selected_foreach(self.blist, mlist)
 
@@ -511,7 +509,7 @@ class ListView(NavigationView):
         self.sort_col = 0
         self.sort_order = Gtk.SortType.ASCENDING
         self.setup_filter()
-        self.build_tree()
+        self.build_tree(preserve_col=False)
 
     def column_order(self):
         """
@@ -540,14 +538,18 @@ class ListView(NavigationView):
         """
         prompt = True
         if len(self.selected_handles()) > 1:
-            q = QuestionDialog2(
+            ques = QuestionDialog3(
                 _("Multiple Selection Delete"),
                 _("More than one item has been selected for deletion. "
                   "Select the option indicating how to delete the items:"),
                 _("Delete All"),
                 _("Confirm Each Delete"),
                 parent=self.uistate.window)
-            prompt = not q.run()
+            res = ques.run()
+            if res == -1:  # Cancel
+                return
+            else:
+                prompt = not res  # we prompt on 'Confirm Each Delete'
 
         if not prompt:
             self.uistate.set_busy_cursor(True)
@@ -566,11 +568,16 @@ class ListView(NavigationView):
                 #descr = object.get_description()
                 #if descr == "":
                 descr = object.get_gramps_id()
-                self.uistate.set_busy_cursor(True)
-                QuestionDialog(_('Delete %s?') % descr, msg,
-                               _('_Delete Item'), query.query_response,
-                               parent=self.uistate.window)
-                self.uistate.set_busy_cursor(False)
+                ques = QuestionDialog3(_('Delete %s?') % descr, msg,
+                                       _('_Yes'), _('_No'),
+                                       parent=self.uistate.window)
+                res = ques.run()
+                if res == -1:  # Cancel
+                    return
+                elif res:  # If true, perfom the delete
+                    self.uistate.set_busy_cursor(True)
+                    query.query_response()
+                    self.uistate.set_busy_cursor(False)
             else:
                 query.query_response()
 
@@ -717,23 +724,13 @@ class ListView(NavigationView):
         if len(selected_ids) == 1:
             if self.drag_info():
                 self.list.drag_source_set(Gdk.ModifierType.BUTTON1_MASK,
-                                      [],
-                                      Gdk.DragAction.COPY)
-                #TODO GTK3: wourkaround here for bug https://bugzilla.gnome.org/show_bug.cgi?id=680638
-                tglist = Gtk.TargetList.new([])
-                dtype = self.drag_info()
-                tglist.add(dtype.atom_drag_type, dtype.target_flags, dtype.app_id)
-                self.list.drag_source_set_target_list(tglist)
+                                          [self.drag_info().target()],
+                                          Gdk.DragAction.COPY)
         elif len(selected_ids) > 1:
             if self.drag_list_info():
                 self.list.drag_source_set(Gdk.ModifierType.BUTTON1_MASK,
-                                      [],
-                                      Gdk.DragAction.COPY)
-                #TODO GTK3: wourkaround here for bug https://bugzilla.gnome.org/show_bug.cgi?id=680638
-                tglist = Gtk.TargetList.new([])
-                dtype = self.drag_list_info()
-                tglist.add(dtype.atom_drag_type, dtype.target_flags, dtype.app_id)
-                self.list.drag_source_set_target_list(tglist)
+                                          [self.drag_list_info().target()],
+                                          Gdk.DragAction.COPY)
 
         self.uistate.modify_statusbar(self.dbstate)
 
@@ -817,12 +814,40 @@ class ListView(NavigationView):
                 self.change_active(handle)
                 break
 
+    def related_update(self, hndl_list):
+        """ Find handles pointing to the view from a related object update;
+        for example if an event update occurs, find person handles referenced
+        by that event. Use the created list to perfom row_updates.
+        Places need a bit more work, as they could be enclosing other places.
+        In addition, for People view the birth/death place name could change.
+        So we recursively check places and events until we find our class
+        object handle to use for updating rows.
+        """
+        nav_type = self.navigation_type()
+        upd_list = []
+        done = set()
+        queue = deque(hndl_list)
+        while queue:
+            hndl = queue.pop()
+            if hndl in done:  # make sure we aren't in infinite loop
+                continue      # in case places can enclose each other
+            done.add(hndl)
+            for cl_name, handle in self.dbstate.db.find_backlink_handles(hndl):
+                if cl_name == nav_type:
+                    upd_list.append(handle)
+                if (cl_name == 'Place' or cl_name == 'Event' and
+                        nav_type == 'Person'):
+                    queue.append(handle)
+        if upd_list:
+            self.row_update(upd_list)
+
     def _button_press(self, obj, event):
         """
         Called when a mouse is clicked.
         """
         if not self.dbstate.is_open():
             return False
+        menu = self.uimanager.get_widget('Popup')
         if event.type == Gdk.EventType._2BUTTON_PRESS and event.button == 1:
             if self.model.get_flags() & Gtk.TreeModelFlags.LIST_ONLY:
                 self.edit(obj)
@@ -838,48 +863,53 @@ class ListView(NavigationView):
                     else:
                         self.edit(obj)
                         return True
-        elif is_right_click(event):
-            menu = self.uistate.uimanager.get_widget('/Popup')
-            if menu:
-                # Quick Reports
-                qr_menu = self.uistate.uimanager.\
-                            get_widget('/Popup/QuickReport')
-                if qr_menu and self.QR_CATEGORY > -1 :
-                    (ui, qr_actions) = create_quickreport_menu(
-                                            self.QR_CATEGORY,
-                                            self.dbstate,
-                                            self.uistate,
-                                            self.first_selected())
-                    self.__build_menu(qr_menu, qr_actions)
+        elif is_right_click(event) and menu:
+            prefix = 'win'
+            self.at_popup_menu = []
+            actions = []
+            # Quick Reports
+            if self.QR_CATEGORY > -1:
+                (qr_ui, qr_actions) = create_quickreport_menu(
+                    self.QR_CATEGORY, self.dbstate, self.uistate,
+                    self.first_selected(), prefix)
+                if self.get_active() and qr_actions:
+                    actions.extend(qr_actions)
+                    qr_ui = ("<placeholder id='QuickReport'>%s</placeholder>" %
+                             qr_ui)
+                    self.at_popup_menu.append(qr_ui)
 
-                # Web Connects
-                web_menu = self.uistate.uimanager.\
-                                get_widget('/Popup/WebConnect')
-                if web_menu:
-                    web_actions = create_web_connect_menu(
-                                        self.dbstate,
-                                        self.uistate,
-                                        self.navigation_type(),
-                                        self.first_selected())
-                    self.__build_menu(web_menu, web_actions)
+            # Web Connects
+            if self.QR_CATEGORY == CATEGORY_QR_PERSON:
+                (web_ui, web_actions) = create_web_connect_menu(
+                    self.dbstate, self.uistate, self.navigation_type(),
+                    self.first_selected(), prefix)
+                if self.get_active() and web_actions:
+                    actions.extend(web_actions)
+                    self.at_popup_menu.append(web_ui)
 
-                menu.popup(None, None, None, None, event.button, event.time)
-                return True
+            if self.at_popup_action:
+                self.uimanager.remove_ui(self.at_popup_menu)
+                self.uimanager.remove_action_group(self.at_popup_action)
+            self.at_popup_action = ActionGroup('AtPopupActions',
+                                               actions)
+            self.uimanager.insert_action_group(self.at_popup_action)
+            self.at_popup_menu = self.uimanager.add_ui_from_string(
+                self.at_popup_menu)
+            self.uimanager.update_menu()
+
+            menu = self.uimanager.get_widget('Popup')
+            popup_menu = Gtk.Menu.new_from_model(menu)
+            popup_menu.attach_to_widget(obj, None)
+            popup_menu.show_all()
+            if Gtk.MINOR_VERSION < 22:
+                # ToDo The following is reported to work poorly with Wayland
+                popup_menu.popup(None, None, None, None,
+                                 event.button, event.time)
+            else:
+                popup_menu.popup_at_pointer(event)
+            return True
 
         return False
-
-    def __build_menu(self, menu, actions):
-        """
-        Build a submenu for quick reports and web connects
-        """
-        if self.get_active() and len(actions) > 1:
-            sub_menu = Gtk.Menu()
-            for action in actions[1:]:
-                add_menuitem(sub_menu, action[2], None, action[5])
-            menu.set_submenu(sub_menu)
-            menu.show()
-        else:
-            menu.hide()
 
     def _key_press(self, obj, event):
         """
@@ -974,9 +1004,6 @@ class ListView(NavigationView):
             return True
         return False
 
-    def key_delete(self):
-        self.remove(None)
-
     def change_page(self):
         """
         Called when a page is changed.
@@ -986,31 +1013,39 @@ class ListView(NavigationView):
             self.uistate.show_filter_results(self.dbstate,
                                              self.model.displayed(),
                                              self.model.total())
-        self.edit_action.set_visible(True)
-        self.edit_action.set_sensitive(not self.dbstate.db.readonly)
+        self.uimanager.set_actions_visible(self.edit_action, True)
+        self.uimanager.set_actions_sensitive(self.edit_action,
+                                             not self.dbstate.db.readonly)
 
     def on_delete(self):
         """
         Save the column widths when the view is shutdown.
         """
+        self.save_column_info()
+        PageView.on_delete(self)
+
+    def save_column_info(self):
+        """
+        Save the column widths, order, and view settings
+        """
         widths = self.get_column_widths()
         order = self._config.get('columns.rank')
         size = self._config.get('columns.size')
-        vis =  self._config.get('columns.visible')
+        vis = self._config.get('columns.visible')
         newsize = []
         index = 0
         for val, size in zip(order, size):
-            if val in vis:
-                size = widths[index]
+            if val in vis[:-1]:  # don't use last column size, it's wrong
+                if widths[index]:
+                    size = widths[index]
                 index += 1
             newsize.append(size)
         self._config.set('columns.size', newsize)
-        PageView.on_delete(self)
 
     ####################################################################
     # Export data
     ####################################################################
-    def export(self, obj):
+    def export(self, *obj):
         chooser = Gtk.FileChooserDialog(
             _("Export View as Spreadsheet"),
             self.uistate.window,
@@ -1030,6 +1065,8 @@ class ListView(NavigationView):
         combobox.set_active(0)
         box.show_all()
         chooser.set_extra_widget(box)
+        default_dir = config.get('paths.recent-export-dir')
+        chooser.set_current_folder(default_dir)
 
         while True:
             value = chooser.run()
@@ -1042,6 +1079,7 @@ class ListView(NavigationView):
             else:
                 chooser.destroy()
                 return
+        config.set('paths.recent-export-dir', os.path.split(fn)[0])
         self.write_tabbed_file(fn, fl)
 
     def write_tabbed_file(self, name, type):
@@ -1112,25 +1150,25 @@ class ListView(NavigationView):
     # Template functions
     ####################################################################
     @abstractmethod
-    def edit(self, obj, data=None):
+    def edit(self, *obj):
         """
         Template function to allow the editing of the selected object
         """
 
     @abstractmethod
-    def remove(self, handle, data=None):
+    def remove(self, *obj):
         """
         Template function to allow the removal of an object by its handle
         """
 
     @abstractmethod
-    def add(self, obj, data=None):
+    def add(self, *obj):
         """
         Template function to allow the adding of a new object
         """
 
     @abstractmethod
-    def merge(self, obj, data=None):
+    def merge(self, *obj):
         """
         Template function to allow the merger of two objects.
         """
@@ -1141,7 +1179,7 @@ class ListView(NavigationView):
         Template function to allow the removal of an object by its handle
         """
 
-    def open_all_nodes(self, obj):
+    def open_all_nodes(self, *obj):
         """
         Method for Treeviews to open all groups
         obj: for use of method in event callback
@@ -1154,14 +1192,14 @@ class ListView(NavigationView):
         self.uistate.set_busy_cursor(False)
         self.uistate.modify_statusbar(self.dbstate)
 
-    def close_all_nodes(self, obj):
+    def close_all_nodes(self, *obj):
         """
         Method for Treeviews to close all groups
         obj: for use of method in event callback
         """
         self.list.collapse_all()
 
-    def open_branch(self, obj):
+    def open_branch(self, *obj):
         """
         Expand the selected branches and all children.
         obj: for use of method in event callback
@@ -1176,7 +1214,7 @@ class ListView(NavigationView):
         self.uistate.set_busy_cursor(False)
         self.uistate.modify_statusbar(self.dbstate)
 
-    def close_branch(self, obj):
+    def close_branch(self, *obj):
         """
         Collapse the selected branches.
         :param obj: not used, present only to allow the use of the method in

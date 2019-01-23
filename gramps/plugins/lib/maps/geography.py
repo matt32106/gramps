@@ -54,6 +54,7 @@ from gramps.gen.const import HOME_DIR
 from gramps.gen.config import config
 from gramps.gui.editors import EditPlace, EditEvent, EditFamily, EditPerson
 from gramps.gui.selectors.selectplace import SelectPlace
+from gramps.gen.utils.file import media_path_full
 
 import gi
 gi.require_version('OsmGpsMap', '1.0')
@@ -199,7 +200,7 @@ class GeoGraphyView(OsmGps, NavigationView):
         """
         self.build_tree()
 
-    def add_bookmark(self, menu):
+    def add_bookmark(self, *menu):
         """
         Add the place to the bookmark
         """
@@ -308,16 +309,7 @@ class GeoGraphyView(OsmGps, NavigationView):
         another method.
         """
         NavigationView.define_actions(self)
-        self.define_print_actions()
-
-    def define_print_actions(self):
-        """
-        Associate the print button to the PrintView action.
-        """
-        self._add_action('PrintView', 'document-print', _("_Print..."),
-                         accel="<PRIMARY>P",
-                         tip=_("Print or save the Map"),
-                         callback=self.printview)
+        self._add_action('PrintView', self.printview, '<Primary>P')
 
     def config_connect(self):
         """
@@ -353,7 +345,6 @@ class GeoGraphyView(OsmGps, NavigationView):
         """
         self.menu = Gtk.Menu()
         menu = self.menu
-        menu.set_title(_('Map Menu'))
 
         if config.get("geography.show_cross"):
             title = _('Remove cross hair')
@@ -875,6 +866,7 @@ class GeoGraphyView(OsmGps, NavigationView):
                 path = media_obj.get_path()
                 name, extension = os.path.splitext(path)
                 if extension == ".kml":
+                    path = media_path_full(self.dbstate.db, path)
                     if os.path.isfile(path):
                         self.kml_layer.add_kml(path)
 
@@ -883,7 +875,7 @@ class GeoGraphyView(OsmGps, NavigationView):
     # Printing functionalities
     #
     #-------------------------------------------------------------------------
-    def printview(self, obj):
+    def printview(self, *obj):
         """
         Print or save the view that is currently shown
         """

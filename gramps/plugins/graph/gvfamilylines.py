@@ -49,7 +49,7 @@ LOG = logging.getLogger(".FamilyLines")
 #------------------------------------------------------------------------
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.gettext
-from gramps.gen.lib import EventRoleType, EventType, Person, PlaceType
+from gramps.gen.lib import EventRoleType, EventType, Person, PlaceType, Date
 from gramps.gen.utils.file import media_path_full
 from gramps.gen.utils.thumbnails import (get_thumbnail_path, SIZE_NORMAL,
                                          SIZE_LARGE)
@@ -78,6 +78,11 @@ _ARROWS = [ { 'name' : _("Descendants <- Ancestors"),  'value' : 'd' },
             { 'name' : _("Descendants -> Ancestors"),  'value' : 'a' },
             { 'name' : _("Descendants <-> Ancestors"), 'value' : 'da' },
             { 'name' : _("Descendants - Ancestors"),   'value' : '' }]
+
+_CORNERS = [ { 'name' : _("None"),  'value' : '' },
+             { 'name' : _("Female"), 'value' : 'f' },
+             { 'name' : _("Male"),   'value' : 'm' },
+             { 'name' : _("Both"),  'value' : 'fm' }]
 
 #------------------------------------------------------------------------
 #
@@ -151,9 +156,11 @@ class FamilyLinesOptions(MenuReportOptions):
                          "is unknown it will be shown with gray."))
         add_option("color", color)
 
-        roundedcorners = BooleanOption(_('Use rounded corners'), False)
-        roundedcorners.set_help(
-            _("Use rounded corners to differentiate between women and men."))
+        roundedcorners = EnumeratedListOption(_("Rounded corners"), '')
+        for i in range( 0, len(_CORNERS) ):
+            roundedcorners.add_item(_CORNERS[i]["value"], _CORNERS[i]["name"])
+        roundedcorners.set_help(_("Use rounded corners e.g. to differentiate "
+                         "between women and men."))
         add_option("useroundedcorners", roundedcorners)
 
         stdoptions.add_gramps_id_option(menu, category_name, ownline=True)
@@ -811,7 +818,8 @@ class FamilyLinesReport(Report):
             if bth_event and self._incdates:
                 date = bth_event.get_date_object()
                 if self._just_years and date.get_year_valid():
-                    birth_str = '%i' % date.get_year()
+                    birth_str = self._get_date( # localized year
+                        Date(date.get_year()))
                 else:
                     birth_str = self._get_date(date)
 
@@ -826,7 +834,8 @@ class FamilyLinesReport(Report):
             if dth_event and self._incdates:
                 date = dth_event.get_date_object()
                 if self._just_years and date.get_year_valid():
-                    death_str = '%i' % date.get_year()
+                    death_str = self._get_date( # localized year
+                        Date(date.get_year()))
                 else:
                     death_str = self._get_date(date)
 
@@ -878,7 +887,7 @@ class FamilyLinesReport(Report):
                 label += '%s(' % line_delimiter
                 if birth_str:
                     label += '%s' % birth_str
-                label += ' - '
+                label += ' – '
                 if death_str:
                     label += '%s' % death_str
                 label += ')'
@@ -910,7 +919,9 @@ class FamilyLinesReport(Report):
                 border = ""
                 fill = ""
 
-            if gender == person.FEMALE and self._useroundedcorners:
+            if gender == person.FEMALE and ("f" in self._useroundedcorners):
+                style = "rounded"
+            elif gender == person.MALE and ("m" in self._useroundedcorners):
                 style = "rounded"
             elif gender == person.UNKNOWN:
                 shape = "hexagon"
@@ -953,7 +964,8 @@ class FamilyLinesReport(Report):
                         if self._incdates:
                             date = event.get_date_object()
                             if self._just_years and date.get_year_valid():
-                                wedding_date = '%i' % date.get_year()
+                                wedding_date = self._get_date( # localized year
+                                    Date(date.get_year()))
                             else:
                                 wedding_date = self._get_date(date)
                         # get the wedding location

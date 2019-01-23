@@ -65,6 +65,7 @@ def _T_(value): # enable deferred translations (see Python docs 22.1.3.4)
 _TITLE0 = _T_("Birthday and Anniversary Report")
 _TITLE1 = _T_("My Birthday Report")
 _TITLE2 = _T_("Produced with Gramps")
+_DEADTXT = _T_("✝")
 
 #------------------------------------------------------------------------
 #
@@ -91,15 +92,18 @@ class BirthdayReport(Report):
         self.relationships = mgobn('relationships')
         self.year = mgobn('year')
         self.country = mgobn('country')
-        self.anniversaries = mgobn('anniversaries')
         self.maiden_name = mgobn('maiden_name')
         self.alive = mgobn('alive')
         self.birthdays = mgobn('birthdays')
+        self.anniversaries = mgobn('anniversaries')
+        self.death_anniversaries = mgobn('death_anniversaries')
         self.text1 = mgobn('text1')
         self.text2 = mgobn('text2')
         self.text3 = mgobn('text3')
+        self.deadtxt = mgobn('deadtxt')
         self.filter_option =  menu.get_option_by_name('filter')
         self.filter = self.filter_option.get_filter()
+        self.showyear = mgobn('showyear')
         pid = mgobn('pid')
 
         self.set_locale(menu.get_option_by_name('trans').get_value())
@@ -180,10 +184,13 @@ class BirthdayReport(Report):
         # generate the report:
         self.doc.start_paragraph('BIR-Title')
         if self.titletext == _(_TITLE0):
-            title = self._(_TITLE0) + ": " + str(self.year)
+            title = self._("%(str1)s: %(str2)s") % {
+                'str1' : self._(_TITLE0),
+                'str2' : self._get_date(Date(self.year))} # localized year
         else:
-            title = str(self.titletext) + ": " + str(self.year)
-        # FIXME those concatenated strings won't work for RTL languages
+            title = self._("%(str1)s: %(str2)s") % {
+                'str1' : str(self.titletext),
+                'str2' : self._get_date(Date(self.year))}
         mark = IndexMark(title, INDEX_TYPE_TOC, 1)
         self.doc.write_text(title, mark)
         self.doc.end_paragraph()
@@ -316,15 +323,23 @@ class BirthdayReport(Report):
                             if relation:
                                 # FIXME this won't work for RTL languages
                                 comment = " --- %s" % relation
+                        deadtxt = ""
+                        if (not alive):
+                            deadtxt = self.deadtxt
+                        yeartxt = ""
+                        if self.showyear:
+                            yeartxt = "(%s) " % year
                         if nyears == 0:
-                            text = self._('%(person)s, birth%(relation)s') % {
+                            text = self._('* %(person)s, birth%(relation)s') % {
                                 'person'   : short_name,
                                 'relation' : comment}
                         else:
                             # translators: leave all/any {...} untranslated
-                            text = ngettext('{person}, {age}{relation}',
-                                            '{person}, {age}{relation}',
-                                            nyears).format(person=short_name,
+                            text = ngettext('* {year}{person}{dead}, {age}{relation}',
+                                            '* {year}{person}{dead}, {age}{relation}',
+                                            nyears).format(year=yeartxt,
+                                                           person=short_name,
+                                                           dead=deadtxt,
                                                            age=nyears,
                                                            relation=comment)
 
@@ -369,23 +384,70 @@ class BirthdayReport(Report):
                                         nyears = self.year - year
 
                                         if event_obj.is_valid():
+                                            prob_alive_date = Date(self.year, month, day)
+                                            alive1 = probably_alive(person, self.database,
+                                                                        prob_alive_date)
+                                            alive2 = probably_alive(spouse, self.database,
+                                                                        prob_alive_date)
+                                            deadtxt1 = ""
+                                            deadtxt2 = ""
+                                            if (not alive1):
+                                                deadtxt1 = self.deadtxt
+                                            if (not alive2):
+                                                deadtxt2 = self.deadtxt
+                                            yeartxt = ""
+                                            if self.showyear:
+                                                yeartxt = "(%s) " % year
                                             if nyears == 0:
-                                                text = self._("%(spouse)s and\n %(person)s, wedding") % {
+                                                text = self._("⚭ %(spouse)s and\n %(person)s, wedding") % {
                                                          'spouse' : spouse_name,
                                                          'person' : short_name}
                                             else:
                                                 # translators: leave all/any {...} untranslated
-                                                text = ngettext("{spouse} and\n {person}, {nyears}",
-                                                                "{spouse} and\n {person}, {nyears}",
-                                                                nyears).format(spouse=spouse_name, person=short_name, nyears=nyears)
-
-                                                prob_alive_date = Date(self.year, month, day)
-                                                alive1 = probably_alive(person, self.database,
-                                                                        prob_alive_date)
-                                                alive2 = probably_alive(spouse, self.database,
-                                                                        prob_alive_date)
+                                                text = ngettext("⚭ {year}{spouse}{deadtxt2} and\n {person}{deadtxt1}, {nyears}",
+                                                                "⚭ {year}{spouse}{deadtxt2} and\n {person}{deadtxt1}, {nyears}",
+                                                                nyears).format(year=yeartxt, spouse=spouse_name, deadtxt2=deadtxt2, person=short_name, deadtxt1=deadtxt1, nyears=nyears)
                                                 if (self.alive and alive1 and alive2) or not self.alive:
                                                     self.add_day_item(text, month, day, spouse)
+
+                death_ref = person.get_death_ref()
+                death_date = None
+                if death_ref:
+                    death_event = self.database.get_event_from_handle(death_ref.ref)
+                    death_date = death_event.get_date_object()
+
+                if (self.death_anniversaries and death_date is not None and death_date.is_valid()):
+                    death_date = gregorian(death_date)
+
+                    year = death_date.get_year()
+                    month = death_date.get_month()
+                    day = death_date.get_day()
+
+                    nyears = self.year - year
+
+                    comment = ""
+                    if self.relationships:
+                            relation = rel_calc.get_one_relationship(
+                                                             self.database,
+                                                             self.center_person,
+                                                             person,
+                                                             olocale=self._locale)
+                            if relation:
+                                # FIXME this won't work for RTL languages
+                                comment = " --- %s" % relation
+                    yeartxt = ""
+                    if self.showyear:
+                        yeartxt = "(%s) " % year
+                    if nyears == 0:
+                        text = _('✝ {person}, death {relation}').format(person=short_name,relation=comment)
+                    else:
+                        text = ngettext('✝ {year}{person}, {age}{relation}',
+                                        '✝ {year}{person}, {age}{relation}',
+                                        nyears).format(year=yeartxt,
+                                                       person=short_name,
+                                                       age=nyears,
+                                                       relation=comment)
+                    self.add_day_item(text, month, day, person)
 
 #------------------------------------------------------------------------
 #
@@ -446,9 +508,17 @@ class BirthdayOptions(MenuReportOptions):
         alive.set_help(_("Include only living people in the report"))
         menu.add_option(category_name, "alive", alive)
 
+        deadtxt = StringOption(_("Dead Symbol"), _(_DEADTXT))
+        deadtxt.set_help(_("This will show after name to indicate that person is dead"))
+        menu.add_option(category_name, "deadtxt", deadtxt)
+
         self.__update_filters()
 
         stdoptions.add_localization_option(menu, category_name)
+
+        showyear = BooleanOption(_("Show event year"), True)
+        showyear.set_help(_("Prints the year the event took place in the report"))
+        menu.add_option(category_name, "showyear", showyear)
 
         category_name = _("Content")
 
@@ -489,6 +559,10 @@ class BirthdayOptions(MenuReportOptions):
         anniversaries = BooleanOption(_("Include anniversaries"), True)
         anniversaries.set_help(_("Whether to include anniversaries"))
         menu.add_option(category_name, "anniversaries", anniversaries)
+
+        death_anniversaries = BooleanOption(_("Include death anniversaries"), True)
+        death_anniversaries.set_help(_("Whether to include anniversaries of death"))
+        menu.add_option(category_name, "death_anniversaries", death_anniversaries)
 
         show_relships = BooleanOption(
             _("Include relationship to center person"), False)

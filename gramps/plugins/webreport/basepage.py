@@ -59,7 +59,7 @@ import logging
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 from gramps.gen.lib import (FamilyRelType, NoteType, NameType, Person,
                             UrlType, Date, Name, PlaceType, EventRoleType,
-                            Family, Citation)
+                            Family, Citation, Place)
 from gramps.gen.lib.date import Today
 from gramps.gen.const import PROGRAM_NAME, URL_HOMEPAGE
 from gramps.version import VERSION
@@ -635,18 +635,10 @@ class BasePage: # pylint: disable=C1001
                 (self._("Event"), "ColumnEvent"),
                 (self._("Date"), "ColumnDate"),
                 (self._("Place"), "ColumnPlace"),
-                (self._("Description"), "ColumnDescription")]
+                (self._("Description"), "ColumnDescription"),
+                (self._("Sources"), "ColumnSources")]
         )
         trow += Html("/tr", close=None)
-        trow2 = Html("tr", indent=False)
-        trow2.extend(
-            Html("th", trans, class_=colclass, colspan=opt, inline=True)
-            for trans, colclass, opt in  [
-                ("", "ColumnEvent", 1),
-                (self._("Sources"), "ColumnSources", 1),
-                (self._("Notes"), "ColumnNotes", 2)]
-        )
-        trow.extend(trow2)
         return trow
 
     def display_event_row(self, event, event_ref, place_lat_long,
@@ -697,19 +689,19 @@ class BasePage: # pylint: disable=C1001
         )
 
         trow2 = Html("tr")
-        trow2 += Html("td", "", class_="ColumnSources")
+        trow2 += Html("td", "", class_="ColumnEvent")
         # get event source references
         srcrefs = self.get_citation_links(event.get_citation_list()) or "&nbsp;"
-        trow2 += Html("td", srcrefs, class_="ColumnSources")
+        trow += Html("td", srcrefs, class_="ColumnSources", rowspan=2)
 
         # get event notes
-        notelist = event.get_note_list()
+        notelist = event.get_note_list()[:]  # we don't want to modify cached original
         notelist.extend(event_ref.get_note_list())
         htmllist = self.dump_notes(notelist)
 
         # if the event or event reference has an attribute attached to it,
         # get the text and format it correctly?
-        attrlist = event.get_attribute_list()
+        attrlist = event.get_attribute_list()[:]  # we don't want to modify cached original
         attrlist.extend(event_ref.get_attribute_list())
         for attr in attrlist:
             htmllist.extend(Html("p",
@@ -723,7 +715,7 @@ class BasePage: # pylint: disable=C1001
             if notelist:
                 htmllist.extend(self.dump_notes(notelist))
 
-        trow2 += Html("td", htmllist, class_="ColumnNotes", colspan=2)
+        trow2 += Html("td", htmllist, class_="ColumnNotes", colspan=3)
 
         trow += trow2
         # return events table row to its callers
@@ -1415,10 +1407,10 @@ class BasePage: # pylint: disable=C1001
         # create stylesheet and favicon links
         links = Html("link", type="image/x-icon",
                      href=url4, rel="shortcut icon") + (
+                         Html("link", type="text/css", href=url3,
+                              media='print', rel="stylesheet", indent=False),
                          Html("link", type="text/css", href=url2,
                               media="screen", rel="stylesheet", indent=False),
-                         Html("link", type="text/css", href=url3,
-                              media='print', rel="stylesheet", indent=False)
                          )
 
         # Link to Navigation Menus stylesheet
@@ -2229,7 +2221,7 @@ class BasePage: # pylint: disable=C1001
                                         self.report.copy_file(
                                             media_path_full(self.r_db,
                                                             media.get_path()),
-                                            new_path)
+                                            real_path)
 
                                         tmp += Html("li",
                                                     self.media_link(
@@ -2641,6 +2633,93 @@ class BasePage: # pylint: disable=C1001
                         )
                         tbody += trow
                 tbody += Html("tr") + Html("td", "&nbsp;", colspan=2)
+
+            # encloses
+            with Html("div", class_='subsection encloses') as encloses:
+                tbody += encloses
+                encloses += Html("h4", self._("Place Encloses"), inline=True)
+                with Html("table", class_="infolist place") as table:
+                    encloses += table
+                    visited = [place.handle]
+                    for link in self.r_db.find_backlink_handles(
+                            place.handle, include_classes=['Place']):
+                        if link[1] in visited:
+                            continue
+                        visited.append(link[1])
+                        c_place = self.r_db.get_place_from_handle(link[1])
+                        placeref = None
+                        for placeref in c_place.get_placeref_list():
+                            if placeref.ref == place.handle:
+                                eplace = self.r_db.get_place_from_handle(placeref.ref)
+                                if not eplace:
+                                   continue
+                                table += Html("tr") + Html("td",
+                                            c_place.get_name().get_value())
+
+            # enclosed by
+            with Html("div", class_='subsection encloses') as encloses:
+                tbody += encloses
+                encloses += Html("h4", self._("Enclosed By"), inline=True)
+                with Html("table", class_="infolist place") as table:
+                    encloses += table
+                    visited = [place.handle]
+                    placeref = None
+                    for placeref in place.get_placeref_list():
+                        if placeref.ref in visited:
+                            continue
+                        visited.append(placeref.ref)
+                        pplace = self.r_db.get_place_from_handle(placeref.ref)
+                        if not pplace:
+                           continue
+                        table += Html("tr") + Html("td",
+                                    pplace.get_name().get_value())
+
+        # enclosed by
+        tbody += Html("tr") + Html("td", "&nbsp;")
+        trow = Html("tr") + (
+            Html("th", self._("Enclosed By"),
+                 class_="ColumnAttribute", inline=True),
+        )
+        tbody += trow
+        for placeref in place.get_placeref_list():
+            parent_place = self.r_db.get_place_from_handle(placeref.ref)
+            if parent_place:
+                place_name = parent_place.get_name().get_value()
+                if parent_place.handle in self.report.obj_dict[Place]:
+                    place_hyper = self.place_link(parent_place.handle,
+                                                  place_name,
+                                                  uplink=self.uplink)
+                else:
+                    place_hyper = place_name
+                trow = Html("tr") + (
+                    Html("td", place_hyper, class_="ColumnValue",
+                         inline=True))
+                tbody += trow
+
+        # enclose
+        tbody += Html("tr") + Html("td", "&nbsp;")
+        trow = Html("tr") + (
+            Html("th", self._("Place Encloses"),
+                 class_="ColumnAttribute", inline=True),
+        )
+        tbody += trow
+        for link in self.r_db.find_backlink_handles(
+                place.handle, include_classes=['Place']):
+            child_place = self.r_db.get_place_from_handle(link[1])
+            placeref = None
+            for placeref in child_place.get_placeref_list():
+                if placeref.ref == place.handle:
+                    place_name = child_place.get_name().get_value()
+                    if child_place.handle in self.report.obj_dict[Place]:
+                        place_hyper = self.place_link(child_place.handle,
+                                                      place_name,
+                                                      uplink=self.uplink)
+                    else:
+                        place_hyper = place_name
+                    trow = Html("tr") + (
+                        Html("td", place_hyper,
+                             class_="ColumnValue", inline=True))
+            tbody += trow
 
         # return place table to its callers
         return table

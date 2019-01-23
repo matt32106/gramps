@@ -38,15 +38,22 @@ LOG = logging.getLogger(".")
 from subprocess import Popen, PIPE
 
 #-------------------------------------------------------------------------
+# process 'safe mode'; set up for a temp directory for user data
+# actual directory paths set up in const module
+if "-S" in sys.argv or "--safe" in sys.argv:
+    from tempfile import TemporaryDirectory
+    tempdir = TemporaryDirectory(prefix='gramps_')
+    os.environ['SAFEMODE'] = tempdir.name
+
+#-------------------------------------------------------------------------
 #
 # Gramps modules
 #
 #-------------------------------------------------------------------------
-from .gen.const import APP_GRAMPS, USER_DIRLIST, HOME_DIR
+from .gen.const import APP_GRAMPS, USER_DIRLIST, HOME_DIR, ORIG_HOME_DIR
 from .gen.constfunc import mac
 from .version import VERSION_TUPLE
 from .gen.constfunc import win, get_env_var
-from .gen.config import config
 
 #-------------------------------------------------------------------------
 #
@@ -436,6 +443,18 @@ def run():
     argv_copy = sys.argv[:]
     argpars = ArgParser(argv_copy)
 
+    # if in safe mode we should point the db dir back to the original dir.
+    # It is ok to import config here, 'Defaults' command had its chance...
+    from .gen.config import config
+    if 'SAFEMODE' in os.environ:
+        config.set('database.path', os.path.join(ORIG_HOME_DIR, 'grampsdb'))
+
+    # On windows the fontconfig handler may be a better choice; ask user to
+    # choose for now.
+    if(win() and ('PANGOCAIRO_BACKEND' not in os.environ) and
+       config.get('preferences.alternate-fonthandler')):
+        os.environ['PANGOCAIRO_BACKEND'] = "fontconfig"
+
     # Calls to LOG must be after setup_logging() and ArgParser()
     LOG = logging.getLogger(".locale")
     LOG.debug("Encoding: %s", glocale.encoding)
@@ -459,12 +478,12 @@ def run():
     if argpars.need_gui():
         LOG.debug("A GUI is needed, set it up")
         try:
-            from .gui.grampsgui import startgtkloop
+            from .gui.grampsgui import startgramps
             # no DISPLAY is a RuntimeError in an older pygtk (e.g. F14's 2.17)
         except RuntimeError as msg:
             error += [(_("Configuration error:"), str(msg))]
             return error
-        startgtkloop(error, argpars)
+        startgramps(error, argpars)
     else:
         # CLI use of Gramps
         argpars.print_help()
@@ -477,9 +496,6 @@ def main():
         resource_path, filename = os.path.split(os.path.abspath(__file__))
         resource_path, dirname = os.path.split(resource_path)
         os.environ['GRAMPS_RESOURCES'] = resource_path
-    if win() and ('PANGOCAIRO_BACKEND' not in os.environ) and \
-            config.get('preferences.alternate-fonthandler'):
-        os.environ['PANGOCAIRO_BACKEND'] = "fontconfig"
     errors = run()
     if errors and isinstance(errors, list):
         for error in errors:

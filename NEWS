@@ -1,3 +1,260 @@
+2018-12-20
+Version 5.0.1
+* Media Manager: add help button and remove '...'
+* Edit/Preferences: add Help button
+* Style Editor, Document Styles dialog: add help buttons
+* Fix Select Person dialog Help button URL
+* Fix Select Repository dialog Help button URL
+* Relationship Calculator: Add help button
+* Reorder Relationships dialog; add Help button
+* Generate Book Dialog; Fix Help URL
+* Manage Book dialog; add help button
+* Fix Detached Gramplets Help button URL when 'help_url' not in .gpr
+* Fix help URLs when they contain illegal characters and to match
+  wiki section targetID algorithm Issue
+* Update translations: hu, hr, de, ru, fi, pt_PT, fr, sv, sl
+* Fix contents of enclosed_by secondary	dbapi column
+  (fixes scrambled places in tree view)
+* Google maps URL problem
+* Fix ODT reports with links when run in non-English languages
+* Allow addon Reports to specify a help button URL for options dialog
+* Fix Rebuild Secondary Indexes tool for dbapi backends.
+  For dbapi backends, this tool will update the secondary columns that
+  are used for indexing.
+* Fix dbapi set_name_group_mapping to properly close transaction
+* Fix Russian date handler crash when Russian language isn't installed
+* Fix Quickview for missing table data on some Gtk Versions
+* Fix startup messages when command line contains a bad filename
+* Restrict Place view Name col to the primary name while allowing searchbar
+  to find alt and primary names
+* Fix Person Sidebarfilter when using 'Event' and Reg expressions
+* Fix Find Duplicate People; exception when deleting someone shown outside
+  of the tool
+* Gedcom export, upgrade OBJE handling to Gedcom 5.5.1 style
+* Fix CSV import to set marriage event role to family
+* Update gramps bugtracker URL in all po files
+* Narrative Web:
+  - thumbnails bad alignment.
+  - thumbnails problems in some cases.
+  - use latest version from openlayers.
+  - fixes Space between place, description and the event note
+    when there are many sources.
+  - Change the css order between print and screen.  The chosen theme can erase
+    prior values.
+  - Add a width for the source column in all themes.
+  - Events difficult to read (screen and mobile)
+* Fix typo in CitationListModel for sort change
+* Fix Adding "ToDo" note crash when no active object
+* Fix Citation List view Source Last Changed Column to sort properly
+* Fix for re-entrant main window close when user hits 'x' again
+* Fix exception when closing early editor in tree of editors
+* Fix 'Generate Book' dialog for crash on 'x' close
+* Fix ToDo Gramplet for multiple attempts to edit a note
+* Fix Dashboard for multiple copies of a Gramplet
+* Fix Dashboard to recall minimized or undocked Gramplets
+* Fix Statusbar update to avoid intermittent exception on closed db
+* Fix FilterParser for much older 3.x custom_filters.xml files
+* Fix IsDuplicatedAncestorOf filter rule to avoid crash on tree loop
+* Fix StyledTextEditor EditLink for root text changed to zero length
+  in the background Fixes
+* Fix AgeOnDate and some reports using SimpleAccess for missing surname
+* Fix crash when a filter with loop in definition is defined
+* Fix HandleErrors related to LDS
+* Fix ReferencedBySelection proxy for 'None' LDS Parents
+* Fix HandleError in Citations Gramplet for lds place missing
+* Change PlaceView drag from whole row to just icon during drag
+* Add drag Icon to drags from DisplayTabs Gramplet lists
+* Fix dialogs for 'Help' button closes the dialog, and non-functional 'Help'
+* Fix Family Tree manager for 'Help' button closes dialog
+* Fix selectors for 'Help' button closes dialog
+* Fix 'Generate Book' dialog for 'Help' button closes dialog
+* Fix TestcaseGenerator for 'Help' button closes dialog
+* Fix Selectors to enable the 'Help' buttons to actually work
+* Avoid HandleError when dragging an Added Family from EditFamily
+* Avoid HandleError when dragging an Added Person from EditPerson
+* Fix Clipboard rows cannot be sorted via drag/drop
+* Better default directory choices for import/export file dialogs
+* Records Report: call name not underlined in HTML
+* Fix InteractiveSearch for find before model is populated
+* Fix Gedcom export for incorrect escaping with @#DFRENCH R@
+* Fix reports for shared event attribute and note errors
+* Fix Fan and Descendant Fan charts in Quadrant and Half Circle modes
+  The Descendant Fan chart had several bugs:
+  1) a bug that affected the centering of the chart for these modes
+  2) the chart was drawn in the wrong quadrant
+  3) the centering of the chart for printing was incorrect
+    (the legend was off the page some of the time).
+  4) the sizing of the chart for printing was incorrect
+    (for very small charts of one generation, the legend would overwrite the
+    chart).
+  The Fan Chart for the quadrant view:
+  1) the centering of the chart for printing was incorrect
+    (the legend was off the page some of the time).
+* Fixed issues in the Dutch relationship calculator
+  - extended the ordinal and removed lists till 50, like the English lists.
+  - Fixed bug in which uncles/aunts, nephews/nieces (niblings), siblings and
+    cousins with an unknown gender show up as female.
+  - Fixed some misspellings
+* Setting the year as an ordinal number in Croatian; two more reports now show
+  a year as an ordinal number in Croatian
+* fix name-note is not being cleared in Complete Individual report
+* Fix View Column sizing so last column size setting is maintained
+* Fix view so column widths are preserved when using filters
+* fix the place-format option in Detailed Descendant and Detailed Ancestor text
+  reports
+* Fix bsddb for person sort with empty Surname list
+* Webcal: link problems in some cases Year 2016 is highlighted by default
+  instead of current year.
+* Webcal: Missing links when muliyear unselected
+* Geoclose: exception when a family has no father
+* Family Descendant Tree; fix HandleError
+* fix unhandled exception parsing "future dates" in some locales
+* fix Julian/Gregorian calendar issue when entering only year as date when
+  running gramps in Norwegian
+* Fix and restore Statistics Gramplet to 4.2.x status
+* Fix Check and Repair to deal with bad references empty handle string
+* Speed up Check and Repair, backlinks check stage.
+* Fix strings containing deprecated (Python 3.6+) illegal escape sequences
+* Whatsnext: check if db is open, fixes error if not.
+* Fix usage of posixpath; should be os.path for os independence
+* Fix generate_checksum routine to avoid MemoryError crash
+* Fix corrupted Bookmarks that can happen after Gramps crash
+* Fix Merge Family when same parent is missing from both families
+* Fix <ctrl>c in view to get selected item to clipboard
+* Fix Quickview Gramplet so updates work when changing active
+* Fix place reference editor for bad cut/paste on set_latlongitude
+* Fix Find Database Loop Tool (bad import of _collections)
+* mac/gramps.modules: Switch included moduleset to gitlab.gnome.org.
+* mac/gramps.bundle: File copy doesn't work if the glob can match directories.
+* mac/gramps.bundle: Install the docs/gramps directory in the bundle.
+* debian/changelog: Update the Debian changelog after the 5.0.0 release
+* mac/Info.plist, mac/gramps.modules: Release Gramps-5.0.0 on Mac.
+
+2018-07-24
+Version 5.0.0
+* Correct binary test logic for primary mask.
+* Fix BaseSelector to avoid long delay before display on large trees.
+* Export options > Gui alignment issue.
+* Fix dialog button order on non-Mac systems.
+* Update Debian directory after Gramps 5.0.0-rc1 release.
+* Fix Custom filter update when created via sidebar.
+* Fix Gramplet configure (View/Configure) for large options.
+* Fix IndexError crash in Statistics Charts.
+* [Mac] Change accel for Undo History.  So that it doesn't conflict with a
+  system binding for hiding the window.
+* Fix Family Lines/Family Colors picker for bad transient parent.
+* Fix import_as_dict to utilize user gramps_id prefixes.
+* Fix error when opening bsddb db in read-only mode.
+* Fix dbapi dbs for closeing read-only db crash.
+* Fix menus when operating with read-only db.
+* Fix Name formats to show all parts.
+* Fix dialogs for crash when canceling via 'x'.
+* Remove obsolete omeat-python-modules dependencies.
+* Update translations: cs, da, de, en_GB, eo, fi, hu, is, it, nb, pt_BR, ru, sk, uk, vi
+
+2018-05-20
+Version 5.0.0-rc1
+* po/fi.po: Update Finnish translation
+* po/ru.po: Update Russian translation
+* po/de.po: update German translation
+* po/cs.po: Update Czech translation
+* po/ca.po: Update Catalan translation
+* Fix merge persons when removed person was the Home (default) person
+* Fix FanChartDesc for typo (copy/paste error). Bug occurs when selected
+  person has more than 4 parents.
+* Fix Tag editor for multiple tag removes
+* In Narweb, Relationship to Center person reversed
+* Fix Citation Tree view for crash after plugin reload
+* Fix 'References' Gramplet for issue when activated during an import 
+* disable Application Menu during import
+* Fix Person/Family/Event view updates on various associated changes
+  * Fix Event view for changes in Main Participants
+  * Fix Person/Event/Place views for update to a Place or enclosing place
+  * Fix Person views to update on changes in birth/death event/place
+* Allow unicode characters in json export
+* Filtering problems in the geography view
+* Crash when looking for a place within an area
+* use same box margin for SVG and PDF.
+* Webcal crashes after Narrative Web site exists
+  multiyear select option problem
+* Catch exceptions when loading recent files
+* Check that backend exists before loading database
+* Disable family tree manager features when a backend is unavailable
+  If the default backend is unavailable, then reset it to bsddb.
+* Enclose tree report image path and file name in braces
+* Crash when selecting an old note, event, media, ...
+  Try to sort on another column.
+* [NewRepositoryEditor]Fix help link
+* [ReorderGrampsID]Fix broken help link
+* Fix FTM for delete tree, followed by close; Title etc. shows old tree
+* Fix Relationship path between filter for silent fail
+* setup: Add configuration flag --no-compress-manpages.
+* glade: Don't strip newlines from builder files.
+* List sort by number for citation confidence level
+* Fix confidence level sort in list views -based on the date-sort code.
+* Fix confidence level tooltip -Stop run on text.
+* Fix error in place displayer when offset is outside valid range
+* Fix places in example.gramps 
+  - Moved Greek places into top level Greece entry & added English names.
+  - Removed Puerto Rico as a country as part of USA
+* Use sgettext for Name Format dialog
+* Enable copying the birth & death fields for relationship view 
+* Allow Copying of text fields for Details tabs in selected views with
+  Details gramplets.
+  - Person Details
+  - Place Details
+  - Repository Details
+* Geography: KML media objects not shown on map. Geography doesn't conform to the
+  relative paths If a place has no coordinates, KML files are not displayed.
+* Fix Fan charts for scrolling/resizing of window; bad rendering
+* Fix Clipboard for HandleErrors during db changes
+* Fix Clipboard for Drop/Edit of Surname group in People Tree view
+* Fix Relationship Graph for extraneous families when using filter
+* Fix export gpkg when media files have fractional timestamps.
+* Remove reference to postgresql in core code
+* Move dbapi-specific code out of DbGeneric
+* Create db _schema_exists method
+* Fix place format option in place report
+  * Use -1 instead of None for default place format
+  * adds New [Place format:] option on the [Report Options (2)] tab
+* [Narrative Web Report] Incorrect heading for stepmother or stepfather
+* Cairodoc: Fix Book TOC and Index numbering and placement
+* Fix Fan Chart(s) so they don't crash when opened as last view
+* Fix Organize Tag editor for exception on 'x' close
+* selectors: Change BaseSelector so that selection is kept during Find/Clear
+* Fix multi-page Graph output to pdf with filenames containg spaces
+* Fix Clipboard for right-click on empty clipboard
+* docs/conf.py, docs/gen/gen_db.rst: Fix ImportError & update API docs year 2018
+  - Fixes ImportError: No module named 'gramps.plugins.db.dummydb'
+  - Update Copyright to 2018
+* Webreport: Privacy problem with the relation to the center person.
+* Fix Report Options when used with empty db
+* debian/changelog: Finalise debian/changelog for beta1 release.
+  Also fix old syntax & trailing whitespace issues
+* debian/rules: Enable extra tests that were failing for alpha3
+* debian/patches: Patch person_rules_test.py To remove hard coded build path
+  from import. Fixes FTBFS due to test failure.
+* debian/NEWS: Delete debian/NEWS file, only really applies in Debian
+* debian/changelog: First beta release of gramps 5.0
+  * Sync debian directory with Debian experimental branch on salsa
+  * Point Vcs URLs at the Gramps Project on Github
+  * Correct spelling in debian/rules, node > nose
+  * Delete gbp.conf, not required as gbp not used to build package
+* debian/gbp.conf: Remove gbp.conf, will not be using gbp to build
+  deb package Avoids updating it for every branch used to build it
+* debian/rules: Fix spelling in d/rules node > nose
+* debian/control: Update Vcs URLs to point at Gramps Github repo
+* debian/NEWS, debian/README.Debian, debian/README.test,
+  debian/compat, debian/control, debian/copyright, debian/gbp.conf,
+  debian/gramps.docs, debian/rules, debian/source/format,
+  debian/source/local-options, debian/tests/control,
+  debian/tests/gramps-import-export, debian/upstream/metadata,
+  debian/watch: Resync debian dir from Debian 5.0 experimental branch
+* debian/changelog: Update debian/changelog with releases since 4.0.3
+* Fix testsuite failure when build happens out of the source tree.
+  Build path was hardcoded in an import in: person_rules_test.py
+* mac/Info.plist, mac/gramps.modules: Release Gramps 5.0.0-beta1 on MacOS.
+
 2017-08-01
 Version 4.2.6
 * Fix HasCitation rule in citation filter sidebar

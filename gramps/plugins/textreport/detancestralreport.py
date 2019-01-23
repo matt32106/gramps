@@ -48,6 +48,7 @@ _ = glocale.translation.gettext
 from gramps.gen.errors import ReportError
 from gramps.gen.lib import (EventType, FamilyRelType, Person, NoteType,
                             EventRoleType)
+from gramps.gen.utils.alive import probably_alive
 from gramps.gen.utils.db import get_participant_from_event
 from gramps.gen.plug.docgen import (IndexMark, FontStyle, ParagraphStyle,
                                     FONT_SANS_SERIF, FONT_SERIF,
@@ -186,6 +187,7 @@ class DetAncestorReport(Report):
         self.__narrator = Narrator(self._db, self.verbose, use_call,
                                    use_fulldate, empty_date, empty_place,
                                    nlocale=self._locale,
+                                   place_format=self.place_format,
                                    get_endnote_numbers=self.endnotes)
 
         self.bibli = Bibliography(Bibliography.MODE_DATE|Bibliography.MODE_PAGE)
@@ -332,13 +334,15 @@ class DetAncestorReport(Report):
         if text:
             self.doc.write_text_citation(text)
 
-        text = self.__narrator.get_died_string(self.calcageflag)
-        if text:
-            self.doc.write_text_citation(text)
+        # Write Death and/or Burial text only if not probably alive
+        if not probably_alive(person, self.database):
+            text = self.__narrator.get_died_string(self.calcageflag)
+            if text:
+                self.doc.write_text_citation(text)
 
-        text = self.__narrator.get_buried_string()
-        if text:
-            self.doc.write_text_citation(text)
+            text = self.__narrator.get_buried_string()
+            if text:
+                self.doc.write_text_citation(text)
 
         if self.verbose:
             self.write_parents(person)
@@ -483,7 +487,7 @@ class DetAncestorReport(Report):
 
         if self.inc_attrs:
             text = ""
-            attr_list = event.get_attribute_list()
+            attr_list = event.get_attribute_list()[:]  # we don't want to modify cached original
             attr_list.extend(event_ref.get_attribute_list())
             for attr in attr_list:
                 if text:
@@ -503,7 +507,7 @@ class DetAncestorReport(Report):
         if self.includenotes:
             # if the event or event reference has a note attached to it,
             # get the text and format it correctly
-            notelist = event.get_note_list()
+            notelist = event.get_note_list()[:]  # we don't want to modify cached original
             notelist.extend(event_ref.get_note_list())
             for notehandle in notelist:
                 note = self._db.get_note_from_handle(notehandle)
@@ -628,9 +632,11 @@ class DetAncestorReport(Report):
                 self.__narrator.get_born_string() or
                 self.__narrator.get_christened_string() or
                 self.__narrator.get_baptised_string())
-            self.doc.write_text_citation(
-                self.__narrator.get_died_string() or
-                self.__narrator.get_buried_string())
+            # Write Death and/or Burial text only if not probably alive
+            if not probably_alive(child, self.database):
+                self.doc.write_text_citation(
+                    self.__narrator.get_died_string() or
+                    self.__narrator.get_buried_string())
             # if the list_children_spouses option is selected:
             if self.list_children_spouses:
                 # get the family of the child that contains the spouse
@@ -766,13 +772,15 @@ class DetAncestorReport(Report):
                 if text:
                     self.doc.write_text_citation(text)
 
-                text = self.__narrator.get_died_string(self.calcageflag)
-                if text:
-                    self.doc.write_text_citation(text)
+                # Write Death and/or Burial text only if not probably alive
+                if not probably_alive(ind, self.database):
+                    text = self.__narrator.get_died_string(self.calcageflag)
+                    if text:
+                        self.doc.write_text_citation(text)
 
-                text = self.__narrator.get_buried_string()
-                if text:
-                    self.doc.write_text_citation(text)
+                    text = self.__narrator.get_buried_string()
+                    if text:
+                        self.doc.write_text_citation(text)
 
                 self.write_parents(ind)
 

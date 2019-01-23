@@ -94,13 +94,13 @@ class DateParserRU(DateParser):
         _span_1 = ['с', 'от']
         #_span_2 = ['по', 'до'] # <-- clashes with bce parsing :-(
         _span_2 = ['по']
-        _range_1 = ['между', 'меж\.', 'меж']
+        _range_1 = ['между', r'меж\.', 'меж']
         _range_2 = ['и']
-        self._span =  re.compile("(%s)\s+(?P<start>.+)\s+(%s)\s+(?P<stop>.+)" %
-                                 ('|'.join(_span_1), '|'.join(_span_2)),
-                                 re.IGNORECASE)
-        self._range = re.compile("(%s)\s+(?P<start>.+)\s+(%s)\s+(?P<stop>.+)" %
-                                 ('|'.join(_range_1), '|'.join(_range_2)),
+        self._span = re.compile(r"(%s)\s+(?P<start>.+)\s+(%s)\s+(?P<stop>.+)"
+                                % ('|'.join(_span_1), '|'.join(_span_2)),
+                                re.IGNORECASE)
+        self._range = re.compile(r"(%s)\s+(?P<start>.+)\s+(%s)\s+(?P<stop>.+)"
+                                 % ('|'.join(_range_1), '|'.join(_range_2)),
                                  re.IGNORECASE)
 
 #-------------------------------------------------------------------------
@@ -132,6 +132,11 @@ class DateDisplayRU(DateDisplay):
                                                    inflect, long_months)
         elif date_val[1] == 0: # month is zero but day is not (see 8477)
             return self.display_iso(date_val)
+        elif not hasattr(long_months[date_val[1]], 'f'): # not a Lexeme
+            return "{day:d} {long_month} {year}".format(
+                     day = date_val[0],
+                     long_month = long_months[date_val[1]],
+                     year = year)
         else:
             return "{day:d} {long_month.f[Р]} {year}".format(
                      day = date_val[0],
@@ -151,6 +156,11 @@ class DateDisplayRU(DateDisplay):
                                                     inflect, short_months)
         elif date_val[1] == 0: # month is zero but day is not (see 8477)
             return self.display_iso(date_val)
+        elif not hasattr(short_months[date_val[1]], 'f'): # not a Lexeme
+            return "{day:d} {short_month} {year}".format(
+                     day = date_val[0],
+                     short_month = short_months[date_val[1]],
+                     year = year)
         else:
             return "{day:d} {short_month.f[Р]} {year}".format(
                      day = date_val[0],

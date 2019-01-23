@@ -114,6 +114,11 @@ class CitationBaseModel:
     def citation_page(self, data):
         return data[COLUMN_PAGE]
 
+    def citation_sort_confidence(self, data):
+        if data[COLUMN_CONFIDENCE]:
+            return str(data[COLUMN_CONFIDENCE])
+        return ''
+
     def citation_confidence(self, data):
         return _(conf_strings[data[COLUMN_CONFIDENCE]])
 
@@ -256,6 +261,18 @@ class CitationBaseModel:
             try:
                 source = self.db.get_source_from_handle(source_handle)
                 value = format_time(source.change)
+            except:
+                value = ''
+            self.set_cached_value(source_handle, "SRC_CHAN", value)
+        return value
+
+    def citation_src_sort_change(self, data):
+        source_handle = data[COLUMN_SOURCE]
+        cached, value = self.get_cached_value(source_handle, "SRC_CHAN")
+        if not cached:
+            try:
+                source = self.db.get_source_from_handle(source_handle)
+                value = "%012x" % source.change
             except:
                 value = ''
             self.set_cached_value(source_handle, "SRC_CHAN", value)

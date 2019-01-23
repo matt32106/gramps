@@ -382,7 +382,7 @@ class ArgHandler:
                 self.open = db_path
                 self.__open_action()
             else:
-                sys.exit(1)
+                sys.exit(_("Error: cannot open '%s'") % self.open_gui)
             return db_path
 
         # if not open_gui, parse any command line args. We can only have one
@@ -554,6 +554,9 @@ class ArgHandler:
         if self.dbman.needs_recovery(dbpath):
             self.__error(_("Database needs recovery, cannot open it!"))
             return False
+        if self.dbman.backend_unavailable(dbpath):
+            self.__error(_("Database backend unavailable, cannot open it!"))
+            return False
         return True
 
     #-------------------------------------------------------------------------
@@ -616,8 +619,8 @@ class ArgHandler:
                             #import of plugin failed
                             return
                         category = pdata.category
-                        report_class = eval('mod.' + pdata.reportclass)
-                        options_class = eval('mod.' + pdata.optionclass)
+                        report_class = getattr(mod, pdata.reportclass)
+                        options_class = getattr(mod, pdata.optionclass)
                         if category in (CATEGORY_BOOK, CATEGORY_CODE):
                             options_class(self.dbstate.db, name, category,
                                           options_str_dict)
@@ -665,8 +668,8 @@ class ArgHandler:
                             #import of plugin failed
                             return
                         category = pdata.category
-                        tool_class = eval('mod.' + pdata.toolclass)
-                        options_class = eval('mod.' + pdata.optionclass)
+                        tool_class = getattr(mod, pdata.toolclass)
+                        options_class = getattr(mod, pdata.optionclass)
                         tool.cli_tool(dbstate=self.dbstate,
                                       name=name,
                                       category=category,

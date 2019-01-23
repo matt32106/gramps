@@ -54,7 +54,7 @@ from gramps.gen.plug.report import Report
 from gramps.gen.plug.report import utils
 from gramps.gen.plug.report import MenuReportOptions
 from gramps.gen.plug.report import stdoptions
-from gramps.gen.lib import ChildRefType, EventRoleType, EventType
+from gramps.gen.lib import ChildRefType, EventRoleType, EventType, Date
 from gramps.gen.utils.file import media_path_full, find_file
 from gramps.gen.utils.thumbnails import get_thumbnail_path
 from gramps.gen.relationship import get_relationship_calculator
@@ -144,6 +144,7 @@ class RelGraphReport(Report):
         self.use_roundedcorners = get_value('useroundedcorners')
         self.adoptionsdashed = get_value('dashed')
         self.show_families = get_value('showfamily')
+        self.show_family_leaves = get_value('show_family_leaves')
         self.use_subgraphs = get_value('usesubgraphs')
         self.event_choice = get_value('event_choice')
         self.occupation = get_value('occupation')
@@ -194,6 +195,8 @@ class RelGraphReport(Report):
         person_handles = self._filter.apply(self._db,
                                             self._db.iter_person_handles(),
                                             user=self._user)
+        # Hash people in a dictionary for faster inclusion checking
+        self.persons = set(person_handles)
 
         person_handles = self.sort_persons(person_handles)
 
@@ -216,7 +219,7 @@ class RelGraphReport(Report):
             person = self.database.get_person_from_handle(person_handle)
             has_parent = False
             for parent_handle in find_parents(self.database, person):
-                if parent_handle not in person_handle_list:
+                if parent_handle not in self.persons:
                     continue
                 has_parent = True
             if not has_parent:
@@ -233,7 +236,7 @@ class RelGraphReport(Report):
                 cur = todolist.pop(0)
                 if cur in p_done:
                     continue
-                if cur not in person_handle_list:
+                if cur not in self.persons:
                     p_done.add(cur)
                     continue
                 person = self.database.get_person_from_handle(cur)
@@ -243,7 +246,7 @@ class RelGraphReport(Report):
                 for parent_handle in find_parents(self.database, person):
                     if not parent_handle or parent_handle in p_done:
                         continue
-                    if parent_handle not in person_handle_list:
+                    if parent_handle not in self.persons:
                         continue
                     todolist.insert(0, parent_handle)
                     missing_parents = True
@@ -280,9 +283,6 @@ class RelGraphReport(Report):
         returns string of Graphviz edges linking parents to families or
         children
         """
-        # Hash people in a dictionary for faster inclusion checking
-        person_dict = dict([handle, 1] for handle in person_handles)
-
         for person_handle in person_handles:
             if self._user:
                 self._user.step_progress()
@@ -297,19 +297,19 @@ class RelGraphReport(Report):
                     if child_ref.ref == person_handle:
                         frel = child_ref.frel
                         mrel = child_ref.mrel
-                    elif child_ref.ref in person_dict:
+                    elif child_ref.ref in self.persons:
                         sibling = True
                 if (self.show_families and
-                    ((father_handle and father_handle in person_dict) or
-                     (mother_handle and mother_handle in person_dict) or
+                    ((father_handle and father_handle in self.persons) or
+                     (mother_handle and mother_handle in self.persons) or
                      sibling)):
                     # Link to the family node if either parent is in graph
                     self.add_family_link(p_id, family, frel, mrel)
                 else:
                     # Link to the parents' nodes directly, if they are in graph
-                    if father_handle and father_handle in person_dict:
+                    if father_handle and father_handle in self.persons:
                         self.add_parent_link(p_id, father_handle, frel)
-                    if mother_handle and mother_handle in person_dict:
+                    if mother_handle and mother_handle in self.persons:
                         self.add_parent_link(p_id, mother_handle, mrel)
 
     def add_family_link(self, p_id, family, frel, mrel):
@@ -374,13 +374,18 @@ class RelGraphReport(Report):
                     if family is None:
                         continue
                     if fam_handle not in families_done:
-                        families_done.add(fam_handle)
+                        if not self.show_family_leaves:
+                            family_members = {family.father_handle, family.mother_handle}.union(
+                                child_ref.ref for child_ref in family.child_ref_list) - {None}
+                            if len(family_members.intersection(person_handles)) < 2:
+                                continue
                         self.__add_family(fam_handle)
+                        families_done.add(fam_handle)
                     # If subgraphs are not chosen then each parent is linked
                     # separately to the family. This gives Graphviz greater
                     # control over the layout of the whole graph but
                     # may leave spouses not positioned together.
-                    if not self.use_subgraphs:
+                    if not self.use_subgraphs and fam_handle in families_done:
                         self.doc.add_link(p_id, family.get_gramps_id(), "",
                                           self.arrowheadstyle,
                                           self.arrowtailstyle)
@@ -395,7 +400,8 @@ class RelGraphReport(Report):
                     if family is None:
                         continue
                     for child_ref in family.get_child_ref_list():
-                        if child_ref.ref != person_handle:
+                        if (child_ref.ref != person_handle and
+                                child_ref.ref in self.persons):
                             families_done.add(fam_handle)
                             self.__add_family(fam_handle)
 
@@ -597,7 +603,7 @@ class RelGraphReport(Report):
                 label += '%s(' % line_delimiter
                 if b_date:
                     label += '%s' % b_date
-                label += ' - '
+                label += ' – '
                 if d_date:
                     label += '%s' % d_date
                 label += ')'
@@ -608,7 +614,7 @@ class RelGraphReport(Report):
                 label += '%s(' % line_delimiter
                 if b_place:
                     label += '%s' % b_place
-                label += ' - '
+                label += ' – '
                 if d_place:
                     label += '%s' % d_place
                 label += ')'
@@ -718,7 +724,8 @@ class RelGraphReport(Report):
             event_date = event.get_date_object()
             if event_date.get_year_valid():
                 if self.event_choice in [4, 5]:
-                    return '%i' % event_date.get_year()
+                    return self._get_date( # localized year
+                        Date(event_date.get_year()))
                 elif self.event_choice in [1, 2, 3, 7]:
                     return self._get_date(event_date)
         return ''
@@ -838,6 +845,11 @@ class RelGraphOptions(MenuReportOptions):
         self.event_choice.set_help(
             _("Whether to include dates and/or places"))
         add_option("event_choice", self.event_choice)
+
+        show_family_leaves = BooleanOption(_("Show all family nodes"), True)
+        show_family_leaves.set_help(_("Show family nodes even if the output "
+                                      "contains only one member of the family."))
+        add_option("show_family_leaves", show_family_leaves)
 
         url = BooleanOption(_("Include URLs"), False)
         url.set_help(_("Include a URL in each graph node so "

@@ -36,6 +36,8 @@ from ..managedwindow import ManagedWindow
 from ..filters import SearchBar
 from ..glade import Glade
 from ..widgets.interactivesearchbox import InteractiveSearchBox
+from ..display import display_help
+from gramps.gen.const import URL_MANUAL_PAGE
 
 #-------------------------------------------------------------------------
 #
@@ -86,6 +88,9 @@ class BaseSelector(ManagedWindow):
         self.tree.set_headers_clickable(True)
         self.tree.connect('row-activated', self._on_row_activated)
         self.tree.grab_focus()
+        self.define_help_button(
+            self.glade.get_object('help'), self.WIKI_HELP_PAGE,
+            self.WIKI_HELP_SEC)
 
         # connect to signal for custom interactive-search
         self.searchbox = InteractiveSearchBox(self.tree)
@@ -107,7 +112,6 @@ class BaseSelector(ManagedWindow):
         self.sortorder = Gtk.SortType.ASCENDING
 
         self.skip_list=skip
-        self.build_tree()
         self.selection = self.tree.get_selection()
         self.track_ref_for_deletion("selection")
 
@@ -123,6 +127,12 @@ class BaseSelector(ManagedWindow):
             self.showall.show()
         else:
             self.showall.hide()
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+        self.build_tree()
+        loading = self.glade.get_object('loading')
+        loading.hide()
+
         if default:
             self.goto_handle(default)
 
@@ -272,6 +282,10 @@ class BaseSelector(ManagedWindow):
             filter_info = (False, self.search_bar.get_value(), False)
         else:
             filter_info = self.filter
+        if self.model:
+            sel = self.first_selected()
+        else:
+            sel = None
 
         #set up cols the first time
         if self.setupcols :
@@ -298,6 +312,8 @@ class BaseSelector(ManagedWindow):
         self.tree.set_search_column(search_col)
 
         self.setupcols = False
+        if sel:
+            self.goto_handle(sel)
 
     def column_clicked(self, obj, data):
         if self.sort_col != data:
@@ -311,12 +327,6 @@ class BaseSelector(ManagedWindow):
                 self.sortorder = Gtk.SortType.DESCENDING
             self.model.reverse_order()
         self.build_tree()
-
-        handle = self.first_selected()
-        if handle:
-            path = self.model.on_get_path(handle)
-            self.selection.select_path(path)
-            self.tree.scroll_to_cell(path, None, 1, 0.5, 0)
 
         return True
 
@@ -353,3 +363,7 @@ class BaseSelector(ManagedWindow):
     def close(self, *obj):
         ManagedWindow.close(self)
         self._cleanup_on_exit()
+
+    def define_help_button(self, button, webpage='', section=''):
+        """ Setup to deal with help button """
+        button.connect('clicked', lambda x: display_help(webpage, section))

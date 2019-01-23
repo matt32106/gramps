@@ -57,7 +57,7 @@ from gramps.gen.const import URL_WIKISTRING, URL_MANUAL_PAGE
 from .user import User
 from .dialog import ErrorDialog, QuestionDialog, QuestionDialog2, ICON
 from .pluginmanager import GuiPluginManager
-from gramps.cli.clidbman import CLIDbManager, NAME_FILE, time_val
+from gramps.cli.clidbman import CLIDbManager, NAME_FILE, time_val, UNAVAILABLE
 from .managedwindow import ManagedWindow
 from .ddtargets import DdTargets
 from gramps.gen.recentfiles import rename_filename, remove_filename
@@ -216,11 +216,9 @@ class DbManager(CLIDbManager, ManagedWindow):
         Connects the signals to the buttons on the interface.
         """
         ddtarget = DdTargets.URI_LIST
-        self.top.drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
-        tglist = Gtk.TargetList.new([])
-        tglist.add(ddtarget.atom_drag_type, ddtarget.target_flags,
-                   ddtarget.app_id)
-        self.top.drag_dest_set_target_list(tglist)
+        self.top.drag_dest_set(Gtk.DestDefaults.ALL,
+                               [DdTargets.URI_LIST.target()],
+                               Gdk.DragAction.COPY)
 
         self.remove_btn.connect('clicked', self.__remove_db)
         self.new_btn.connect('clicked', self.__new_db)
@@ -313,6 +311,12 @@ class DbManager(CLIDbManager, ManagedWindow):
             self.connect_btn.set_sensitive(False)
             if _RCS_FOUND:
                 self.rcs_btn.set_sensitive(True)
+        elif store.get_value(node, BACKEND_COL) == UNAVAILABLE:
+            self.close_btn.set_sensitive(False)
+            self.convert_btn.set_sensitive(False)
+            self.connect_btn.set_sensitive(False)
+            self.rcs_btn.set_sensitive(False)
+            self.repair_btn.set_sensitive(False)
         else:
             self.close_btn.set_sensitive(False)
             dbid = config.get('database.backend')
@@ -361,6 +365,10 @@ class DbManager(CLIDbManager, ManagedWindow):
         # Put some help on the buttons:
         dbid = config.get('database.backend')
         backend_type = self.get_backend_name_from_dbid(dbid)
+        if backend_type == UNAVAILABLE:
+            dbid = 'bsddb'
+            config.set('database.backend', dbid)
+            backend_type = self.get_backend_name_from_dbid(dbid)
         self.new_btn.set_tooltip_text(backend_type)
 
         # build the database name column
@@ -710,7 +718,7 @@ class DbManager(CLIDbManager, ManagedWindow):
         # close the database if the user has requested to delete the
         # active database
         if self.data_to_delete[PATH_COL] == self.active:
-            self.dbstate.no_database()
+            self.uistate.viewmanager.close_database()
 
         store, node = self.selection.get_selected()
         path = store.get_path(node)
@@ -1038,8 +1046,8 @@ def find_revisions(name):
     """
     import re
 
-    rev = re.compile("\s*revision\s+([\d\.]+)")
-    date = re.compile("date:\s+(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)[-+]\d\d;")
+    rev = re.compile(r"\s*revision\s+([\d\.]+)")
+    date = re.compile(r"date:\s+(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d)[-+]\d\d;")
 
     if not os.path.isfile(name) or not _RCS_FOUND:
         return []

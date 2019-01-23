@@ -94,7 +94,7 @@ class FanChartDescWidget(FanChartBaseWidget):
     """
     Interactive Fan Chart Widget.
     """
-    CENTER = 50    # we require a larger center as CENTER includes the 1st partner
+    CENTER = 60    # we require a larger center as CENTER includes the 1st partner
 
     def __init__(self, dbstate, uistate, callback_popup=None):
         """
@@ -152,7 +152,7 @@ class FanChartDescWidget(FanChartBaseWidget):
         elif self.form == FORM_HALFCIRCLE:
             self.rootangle_rad = [math.radians(90), math.radians(90 + 180)]
         elif self.form == FORM_QUADRANT:
-            self.rootangle_rad = [math.radians(90), math.radians(90 + 90)]
+            self.rootangle_rad = [math.radians(180), math.radians(270)]
 
         self.handle2desc = {}
         self.famhandle2desc = {}
@@ -361,12 +361,10 @@ class FanChartDescWidget(FanChartBaseWidget):
         """
         Compute the half radius of the circle
         """
-        radius = PIXELS_PER_GEN_SMALL * N_GEN_SMALL + PIXELS_PER_GEN_LARGE \
-                * ( self.nrgen() - N_GEN_SMALL ) + self.CENTER
-        return radius
+        return self.get_radiusinout_for_generation(self.nrgen())[1]
 
     def get_radiusinout_for_generation(self,generation):
-        radius_first_gen = self.CENTER - (1-PIXELS_PER_GENPERSON_RATIO) * PIXELS_PER_GEN_SMALL
+        radius_first_gen = 14  # fudged to make inner circle a bit tighter
         if generation < N_GEN_SMALL:
             radius_start = PIXELS_PER_GEN_SMALL * generation + radius_first_gen
             return (radius_start,radius_start + PIXELS_PER_GEN_SMALL)
@@ -404,29 +402,43 @@ class FanChartDescWidget(FanChartBaseWidget):
             parent, userdata = parentdata
             yield (parent, userdata)
 
-    def on_draw(self, widget, cr, scale=1.):
+    def draw(self, cr=None, scale=1.0):
         """
         The main method to do the drawing.
-        If widget is given, we assume we draw in GTK3 and use the allocation.
-        To draw raw on the cairo context cr, set widget=None.
+        If cr is given, we assume we draw draw raw on the cairo context cr
+        To draw in GTK3 and use the allocation, set cr=None.
+        Note: when drawing for display, to counter a Gtk issue with scrolling
+        or resizing the drawing window, we draw on a surface, then copy to the
+        drawing context when the Gtk 'draw' signal arrives.
         """
         # first do size request of what we will need
         halfdist = self.halfdist()
-        if widget:
+        if not cr:  # Display
             if self.form == FORM_CIRCLE:
-                self.set_size_request(2 * halfdist, 2 * halfdist)
+                size_w = size_h = 2 * halfdist
             elif self.form == FORM_HALFCIRCLE:
-                self.set_size_request(2 * halfdist, halfdist + self.CENTER
-                                      + PAD_PX)
+                size_w = 2 * halfdist
+                size_h = halfdist + self.CENTER + PAD_PX
             elif self.form == FORM_QUADRANT:
-                self.set_size_request(halfdist + self.CENTER + PAD_PX,
-                                      halfdist + self.CENTER + PAD_PX)
+                size_w = size_h = halfdist + self.CENTER + PAD_PX
 
-        cr.scale(scale, scale)
-        # when printing, we need not recalculate
-        if widget:
+            size_w_a = self.get_allocated_width()
+            size_h_a = self.get_allocated_height()
+            self.set_size_request(max(size_w, size_w_a), max(size_h, size_h_a))
+            size_w = self.get_allocated_width()
+            size_h = self.get_allocated_height()
+            self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,
+                                              size_w, size_h)
+            cr = cairo.Context(self.surface)
             self.center_xy = self.center_xy_from_delta()
-        cr.translate(*self.center_xy)
+            cr.translate(*self.center_xy)
+        else:  # printing
+            if self.form == FORM_QUADRANT:
+                self.center_xy = self.CENTER, halfdist
+            else:
+                self.center_xy = halfdist, halfdist
+            cr.scale(scale, scale)
+            cr.translate(*self.center_xy)
 
         cr.save()
         # Draw center person:
@@ -477,7 +489,7 @@ class FanChartDescWidget(FanChartBaseWidget):
         cr.restore()
 
         if self.background in [BACKGROUND_GRAD_AGE, BACKGROUND_GRAD_PERIOD]:
-            self.draw_gradient_legend(cr, widget, halfdist)
+            self.draw_gradient_legend(cr, halfdist)
 
     def cell_address_under_cursor(self, curx, cury):
         """
@@ -535,8 +547,7 @@ class FanChartDescWidget(FanChartBaseWidget):
         elif nrparent <= 4:
             angleinc = math.pi/2
         else:
-            # FIXME: nrchild not set
-            angleinc = 2 * math.pi / nrchild
+            angleinc = 2 * math.pi / nrparent
         for data in self.innerring:
             self.draw_innerring(cr, data[0], data[1], startangle, angleinc)
             startangle += angleinc
@@ -595,6 +606,7 @@ class FanChartDescWidget(FanChartBaseWidget):
         self.toggle_cell_state(self._mouse_click_cell_address)
         self._compute_angles(*self.rootangle_rad)
         self._mouse_click = False
+        self.draw()
         self.queue_draw()
 
     def toggle_cell_state(self, cell_address):
@@ -647,4 +659,5 @@ class FanChartDescGrampsGUI(FanChartGrampsGUI):
                         self.generic_filter, self.alpha_filter, self.form,
                         self.angle_algo, self.dupcolor)
         self.fan.reset()
+        self.fan.draw()
         self.fan.queue_draw()

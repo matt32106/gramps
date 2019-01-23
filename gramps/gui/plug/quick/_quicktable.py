@@ -344,6 +344,7 @@ class QuickTable(SimpleTable):
         self.simpledoc = document
         buffer = self.simpledoc.doc.buffer
         text_view = self.simpledoc.doc.text_view
+        text_view.set_sensitive(False)
         model_index = 1 # start after index
         if self._sort_col:
             sort_index = self._columns.index(self._sort_col)
@@ -351,12 +352,8 @@ class QuickTable(SimpleTable):
             sort_index = 0
         treeview = MultiTreeView()
         treeview.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK,
-             [],
+                                          [DdTargets.HANDLE_LIST.target()],
                                           Gdk.DragAction.COPY)
-        tglist = Gtk.TargetList.new([])
-        tglist.add(DdTargets.HANDLE_LIST.atom_drag_type, Gtk.TargetFlags.SAME_WIDGET,
-                   0)
-        treeview.drag_source_set_target_list(tglist)
         #treeview.enable_model_drag_dest(DdTargets.all_targets(),
         #                                Gdk.DragAction.DEFAULT)
         treeview.connect('drag_data_get', self.object_drag_data_get)
@@ -428,3 +425,6 @@ class QuickTable(SimpleTable):
         text_view.show_all()
         self.simpledoc.paragraph("")
         self.simpledoc.paragraph("")
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+        text_view.set_sensitive(True)

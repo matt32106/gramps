@@ -12,7 +12,7 @@ Copyright: 2000-2007, Alex Roitman
            2001-2017, Free Software Foundation, Inc.
            2001, Graham J. Williams
            2001, Jesper Zedlitz
-           2001-2017, The Gramps Project
+           2001-2018, The Gramps Project
            2002, Gary Shao
            2003-2006, Josiah Carlson
            2004-2006, Eero Tamminen
@@ -64,7 +64,7 @@ Copyright: 2000-2007, Alex Roitman
            2011, Helge Herz
            2011, 2013 John Ralls
            2011, 2016 Matt Keenan
-           2011-2017, Paul Franklin
+           2011-2018, Paul Franklin
            2012, lcc
            2012, 2014, Mathieu MD
            2012, Nicolas Adenis-Lamarre
@@ -86,6 +86,7 @@ Copyright: 2000-2007, Alex Roitman
            2016, Tom Samstag
            2017, Mindaugas Baranauskas
            2017, Robert Carnell
+           2018, Robin van der Vliet
 License: GPL-2+
 
 Files: debian/*

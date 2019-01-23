@@ -218,13 +218,14 @@ register('interface.sidebar-text', True)
 register('interface.size-checked', False)
 register('interface.statusbar', 1)
 register('interface.toolbar-on', True)
+register('interface.toolbar-text', False)
 register('interface.view', True)
 register('interface.surname-box-height', 150)
 register('interface.treemodel-cache-size', 1000)
 
-register('paths.recent-export-dir', '')
+register('paths.recent-export-dir', USER_HOME)
 register('paths.recent-file', '')
-register('paths.recent-import-dir', '')
+register('paths.recent-import-dir', USER_HOME)
 register('paths.report-directory', USER_HOME)
 register('paths.website-directory', USER_HOME)
 register('paths.website-cms-uri', '')
@@ -333,7 +334,7 @@ if not os.path.exists(CONFIGMAN.filename):
     # check previous version of gramps:
     fullpath, filename = os.path.split(CONFIGMAN.filename)
     fullpath, previous = os.path.split(fullpath)
-    match = re.match('gramps(\d*)', previous)
+    match = re.match(r'gramps(\d*)', previous)
     if match:
         # cycle back looking for previous versions of gramps
         for i in range(1, 20): # check back 2 gramps versions

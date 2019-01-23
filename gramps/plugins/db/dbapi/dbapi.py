@@ -56,6 +56,15 @@ class DBAPI(DbGeneric):
     def _initialize(self, directory, username, password):
         raise NotImplementedError
 
+    def _schema_exists(self):
+        """
+        Check to see if the schema exists.
+
+        We use the existence of the person table as a proxy for the database
+        being new.
+        """
+        return self.dbapi.table_exists("person")
+
     def _create_schema(self):
         """
         Create and update schema.
@@ -563,6 +572,7 @@ class DBAPI(DbGeneric):
         """
         Set the default grouping name for a surname.
         """
+        self._txn_begin()
         self.dbapi.execute("SELECT 1 FROM name_group WHERE name = ?",
                            [name])
         row = self.dbapi.fetchone()
@@ -573,6 +583,7 @@ class DBAPI(DbGeneric):
             self.dbapi.execute(
                 "INSERT INTO name_group (name, grouping) VALUES (?, ?)",
                 [name, grouping])
+        self._txn_commit()
 
     def _commit_base(self, obj, obj_key, trans, change_time):
         """
@@ -802,15 +813,33 @@ class DBAPI(DbGeneric):
                              ref_class_name])
         callback(5)
 
-    def rebuild_secondary(self, update):
+    def rebuild_secondary(self, callback=None):
         """
         Rebuild secondary indices
         """
+        if self.readonly:
+            return
+
         # First, expand blob to individual fields:
-        self._update_secondary_values()
+        self._txn_begin()
+        index = 1
+        for obj_type in ('Person', 'Family', 'Event', 'Place', 'Repository',
+                         'Source', 'Citation', 'Media', 'Note', 'Tag'):
+            for handle in self.method('get_%s_handles', obj_type)():
+                obj = self.method('get_%s_from_handle', obj_type)(handle)
+                self._update_secondary_values(obj)
+            if callback:
+                callback(index)
+            index += 1
+        self._txn_commit()
+        if callback:
+            callback(11)
+
         # Next, rebuild stats:
         gstats = self.get_gender_stats()
         self.genderStats = GenderStats(gstats)
+        if callback:
+            callback(12)
 
     def _has_handle(self, obj_key, handle):
         table = KEY_TO_NAME_MAP[obj_key]
@@ -869,6 +898,39 @@ class DBAPI(DbGeneric):
                                "VALUES (?, ?, ?, ?)",
                                [key, female, male, unknown])
         self._txn_commit()
+
+    def undo_reference(self, data, handle):
+        """
+        Helper method to undo a reference map entry
+        """
+        if data is None:
+            sql = ("DELETE FROM reference " +
+                   "WHERE obj_handle = ? AND ref_handle = ?")
+            self.dbapi.execute(sql, [handle[0], handle[1]])
+        else:
+            sql = ("INSERT INTO reference " +
+                   "(obj_handle, obj_class, ref_handle, ref_class) " +
+                   "VALUES(?, ?, ?, ?)")
+            self.dbapi.execute(sql, data)
+
+    def undo_data(self, data, handle, obj_key):
+        """
+        Helper method to undo/redo the changes made
+        """
+        cls = KEY_TO_CLASS_MAP[obj_key]
+        table = cls.lower()
+        if data is None:
+            sql = "DELETE FROM %s WHERE handle = ?" % table
+            self.dbapi.execute(sql, [handle])
+        else:
+            if self._has_handle(obj_key, handle):
+                sql = "UPDATE %s SET blob_data = ? WHERE handle = ?" % table
+                self.dbapi.execute(sql, [pickle.dumps(data), handle])
+            else:
+                sql = "INSERT INTO %s (handle, blob_data) VALUES (?, ?)" % table
+                self.dbapi.execute(sql, [handle, pickle.dumps(data)])
+            obj = self._get_table_func(cls)["class_func"].create(data)
+            self._update_secondary_values(obj)
 
     def get_surname_list(self):
         """
