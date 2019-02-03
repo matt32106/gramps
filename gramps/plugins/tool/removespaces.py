@@ -26,7 +26,7 @@
 # GNOME/GTK modules
 #
 #------------------------------------------------------------------------
-from gi.repository import (Gtk, Gdk)
+from gi.repository import Gtk
 from gi.repository import GObject
 
 #------------------------------------------------------------------------
@@ -44,7 +44,6 @@ from gramps.gui.display import display_help
 from gramps.gui.glade import Glade
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.sgettext
-ngettext = glocale.translation.ngettext
 
 #-------------------------------------------------------------------------
 #
@@ -63,7 +62,7 @@ class RemoveSpaces(ManagedWindow):
     """
     Find leading and trailing spaces in Place names and person names
     """
-    def __init__(self, dbstate, user, options_class, name, callback=None):
+    def __init__(self, dbstate, user, _options_class, _name, _callback=None):
         uistate = user.uistate
 
         self.title = _('Remove leading and/or trailing spaces')
@@ -200,7 +199,7 @@ class RemoveSpaces(ManagedWindow):
                 return True
         return False
 
-    def on_help_clicked(self, obj):
+    def on_help_clicked(self, _obj):
         """
         Display the relevant portion of Gramps manual.
         """
