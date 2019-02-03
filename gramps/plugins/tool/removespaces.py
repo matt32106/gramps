@@ -62,7 +62,7 @@ class RemoveSpaces(ManagedWindow):
     """
     Find leading and trailing spaces in Place names and person names
     """
-    def __init__(self, dbstate, user, _options_class, _name, _callback=None):
+    def __init__(self, dbstate, user, options_class, name, callback=None):
         uistate = user.uistate
 
         self.title = _('Remove leading and/or trailing spaces')
@@ -114,6 +114,7 @@ class RemoveSpaces(ManagedWindow):
         col4 = Gtk.TreeViewColumn(_('surname'), renderer2, text=3)
         col1.set_resizable(True)
         col2.set_resizable(True)
+        col2.set_visible(False)
         col3.set_resizable(True)
         col4.set_resizable(True)
         col1.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
