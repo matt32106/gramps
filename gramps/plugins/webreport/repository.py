@@ -115,7 +115,7 @@ class RepositoryPages(BasePage):
             self.repositorylistpage(self.report, title, repos_dict, keys)
 
             idx = 1
-            for index, key in enumerate(keys):
+            for dummy_index, key in enumerate(keys):
                 (repo, handle) = repos_dict[key]
                 step()
                 idx += 1
@@ -136,7 +136,7 @@ class RepositoryPages(BasePage):
 
         output_file, sio = self.report.create_file("repositories")
         result = self.write_header(_("Repositories"))
-        repolistpage, head, body, outerwrapper = result
+        repolistpage, dummy_head, dummy_body, outerwrapper = result
 
         ldatec = 0
         # begin RepositoryList division
@@ -222,7 +222,7 @@ class RepositoryPages(BasePage):
         output_file, sio = self.report.create_file(handle, 'repo')
         self.uplink = True
         result = self.write_header(_('Repositories'))
-        repositorypage, head, body, outerwrapper = result
+        repositorypage, dummy_head, dummy_body, outerwrapper = result
 
         # begin RepositoryDetail division and page title
         with Html("div", class_="content",

@@ -96,6 +96,7 @@ class MediaPages(BasePage):
         BasePage.__init__(self, report, title="")
         self.media_dict = defaultdict(set)
         self.unused_media_handles = []
+        self.cur_fname = None
 
     def display_pages(self, title):
         """
@@ -147,7 +148,7 @@ class MediaPages(BasePage):
                     next_ = None
                 elif index < total:
                     next_ = sorted_media_handles[index]
-                elif len(self.unused_media_handles) > 0:
+                elif self.unused_media_handles:
                     next_ = self.unused_media_handles[0]
                 else:
                     next_ = None
@@ -163,7 +164,6 @@ class MediaPages(BasePage):
             prev = sorted_media_handles[total_m-1] if total_m > 0 else 0
             if total > 0:
                 for media_handle in self.unused_media_handles:
-                    media = self.r_db.get_media_from_handle(media_handle)
                     gc.collect() # Reduce memory usage when many images.
                     if index == media_count:
                         next_ = None
@@ -194,7 +194,7 @@ class MediaPages(BasePage):
         # save the media file name in case we create unused media pages
         self.cur_fname = self.report.cur_fname
         result = self.write_header(self._('Media'))
-        medialistpage, head, body, outerwrapper = result
+        medialistpage, dummy_head, dummy_body, outerwrapper = result
 
         ldatec = 0
         # begin gallery division
@@ -243,7 +243,7 @@ class MediaPages(BasePage):
                 message = _("Creating list of media pages")
                 with self.r_user.progress(_("Narrated Web Site Report"),
                                           message, media_count + 1
-                                 ) as step:
+                                         ) as step:
                     for media_handle in sorted_media_handles:
                         media = self.r_db.get_media_from_handle(media_handle)
                         if media:
@@ -269,14 +269,7 @@ class MediaPages(BasePage):
                         step()
                         index += 1
 
-                    def sort_by_desc_and_gid(obj):
-                        """
-                        Sort by media description and gramps ID
-                        """
-                        return (obj.desc, obj.gramps_id)
-
                     idx = 1
-                    prev = None
                     total = len(self.unused_media_handles)
                     if total > 0:
                         trow += Html("tr")
@@ -294,9 +287,7 @@ class MediaPages(BasePage):
                             gmfh = self.r_db.get_media_from_handle
                             media = gmfh(media_handle)
                             gc.collect() # Reduce memory usage when many images.
-                            if idx == total:
-                                next_ = None
-                            else:
+                            if idx != total:
                                 self.unused_media_handles[idx]
                             trow += Html("tr")
                             media_data_row = [
@@ -311,7 +302,6 @@ class MediaPages(BasePage):
                                 Html("td", data, class_=colclass)
                                 for data, colclass in media_data_row
                             )
-                            prev = media_handle
                             step()
                             index += 1
                             idx += 1
@@ -375,14 +365,11 @@ class MediaPages(BasePage):
 
         # get media type to be used primarily with "img" tags
         mime_type = media.get_mime_type()
-        #mtype = get_description(mime_type)
 
         if mime_type:
-            #note_only = False
             newpath = self.copy_source_file(media_handle, media)
             target_exists = newpath is not None
         else:
-            #note_only = True
             target_exists = False
 
         self.copy_thumbnail(media_handle, media)
@@ -390,7 +377,7 @@ class MediaPages(BasePage):
         esc_page_title = html_escape(self.page_title)
         result = self.write_header("%s - %s" % (self._("Media"),
                                                 self.page_title))
-        mediapage, head, body, outerwrapper = result
+        mediapage, head, dummy_body, outerwrapper = result
 
         # if there are media rectangle regions, attach behaviour style sheet
         if _region_items:
@@ -446,23 +433,9 @@ class MediaPages(BasePage):
                             # size as requested.
                             orig_image_path = media_path_full(self.r_db,
                                                               media.get_path())
-                            #mtime = os.stat(orig_image_path).st_mtime
                             (width, height) = image_size(orig_image_path)
                             max_width = self.report.options[
                                 'maxinitialimagewidth']
-                            max_height = self.report.options[
-                                'maxinitialimageheight']
-                            if width != 0 and height != 0:
-                                scale_w = (float(max_width)/width) or 1
-                                           # the 'or 1' is so that a max of
-                                           # zero is ignored
-                                scale_h = (float(max_height)/height) or 1
-                            else:
-                                scale_w = 1.0
-                                scale_h = 1.0
-                            scale = min(scale_w, scale_h, 1.0)
-                            new_width = int(width*scale)
-                            new_height = int(height*scale)
 
                             # TODO. Convert disk path to URL.
                             url = self.report.build_url_fname(orig_image_path,
@@ -479,7 +452,7 @@ class MediaPages(BasePage):
                                 if _region_items:
                                     ordered = Html("ol", class_="RegionBox")
                                     mediadisplay += ordered
-                                    while len(_region_items) > 0:
+                                    while _region_items:
                                         (name, coord_x, coord_y,
                                          width, height, linkurl
                                         ) = _region_items.pop()

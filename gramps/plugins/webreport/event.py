@@ -139,7 +139,7 @@ class EventPages(BasePage):
 
         output_file, sio = self.report.create_file("events")
         result = self.write_header(self._("Events"))
-        eventslistpage, head, body_, outerwrapper = result
+        eventslistpage, dummy_head, dummy_body, outerwrapper = result
 
         # begin events list  division
         with Html("div", class_="content", id="EventList") as eventlist:
@@ -197,7 +197,7 @@ class EventPages(BasePage):
                     data_list = sorted(data_list, key=itemgetter(0, 1))
                     first_event = True
 
-                    for (sort_value, event_handle) in data_list:
+                    for (dummy_sort_value, event_handle) in data_list:
                         event = self.r_db.get_event_from_handle(event_handle)
                         _type = event.get_type()
                         gid = event.get_gramps_id()
@@ -351,7 +351,7 @@ class EventPages(BasePage):
         event = report.database.get_event_from_handle(event_handle)
         BasePage.__init__(self, report, title, event.get_gramps_id())
         if not event:
-            return None
+            return
 
         ldatec = event.get_change_time()
         event_media_list = event.get_media_list()
@@ -364,7 +364,7 @@ class EventPages(BasePage):
 
         output_file, sio = self.report.create_file(event_handle, "evt")
         result = self.write_header(self._("Events"))
-        eventpage, head, body_, outerwrapper = result
+        eventpage, dummy_head, dummy_body, outerwrapper = result
 
         # start event detail division
         with Html("div", class_="content", id="EventDetail") as eventdetail:

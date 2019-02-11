@@ -79,7 +79,7 @@ class AddressBookListPage(BasePage):
 
         # Add xml, doctype, meta and stylesheets
         result = self.write_header(_("Address Book"))
-        addressbooklistpage, head, body, outerwrapper = result
+        addressbooklistpage, dummy_head, dummy_body, outerwrapper = result
 
         # begin AddressBookList division
         with Html("div", class_="content",
@@ -120,7 +120,7 @@ class AddressBookListPage(BasePage):
                 table += tbody
 
                 index = 1
-                for (sort_name, person_handle,
+                for (dummy_sort_name, person_handle,
                      has_add, has_res,
                      has_url) in has_url_addr_res:
 

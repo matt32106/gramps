@@ -456,7 +456,7 @@ class NavWebReport(Report):
         if self.archive:
             self.archive.close()
 
-        if len(_WRONGMEDIAPATH) > 0:
+        if _WRONGMEDIAPATH:
             error = '\n'.join([
                 _('ID=%(grampsid)s, path=%(dir)s') % {
                     'grampsid' : x[0],
@@ -859,7 +859,7 @@ class NavWebReport(Report):
         @param: bkref_class   -- The class associated to this handle (source)
         @param: bkref_handle  -- The handle associated to this source
         """
-        if len(self.obj_dict[Source][source_handle]) > 0:
+        if self.obj_dict[Source][source_handle]:
             for bkref in self.bkref_dict[Source][source_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -894,7 +894,7 @@ class NavWebReport(Report):
         @param: bkref_class     -- The class associated to this handle
         @param: bkref_handle    -- The handle associated to this citation
         """
-        if len(self.obj_dict[Citation][citation_handle]) > 0:
+        if self.obj_dict[Citation][citation_handle]:
             for bkref in self.bkref_dict[Citation][citation_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -927,7 +927,7 @@ class NavWebReport(Report):
         @param: bkref_class  -- The class associated to this handle (media)
         @param: bkref_handle -- The handle associated to this media
         """
-        if len(self.obj_dict[Media][media_handle]) > 0:
+        if self.obj_dict[Media][media_handle]:
             for bkref in self.bkref_dict[Media][media_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -968,7 +968,7 @@ class NavWebReport(Report):
         @param: bkref_class  -- The class associated to this handle (source)
         @param: bkref_handle -- The handle associated to this source
         """
-        if len(self.obj_dict[Repository][repos_handle]) > 0:
+        if self.obj_dict[Repository][repos_handle]:
             for bkref in self.bkref_dict[Repository][repos_handle]:
                 if bkref_handle == bkref[1]:
                     return
@@ -1567,6 +1567,7 @@ class NavWebOptions(MenuReportOptions):
         self.__extra_page_name = None
         self.__extra_page = None
         self.__relation = False
+        self.__prevnext = False
         db_options = name + ' ' + dbase.get_dbname()
         MenuReportOptions.__init__(self, db_options, dbase)
 
@@ -1632,10 +1633,10 @@ class NavWebOptions(MenuReportOptions):
 
         self.__relation = BooleanOption(_("Show the relationship between the "
                                           "current person and the active person"
-                                          ), False)
+                                         ), False)
         self.__relation.set_help(_("For each person page, show the relationship"
                                    " between this person and the active person."
-                                   ))
+                                  ))
         addopt("relation", self.__relation)
 
         self.__pid.connect('value-changed', self.__update_filters)
@@ -2125,17 +2126,17 @@ class NavWebOptions(MenuReportOptions):
         """
         Update the change of the extra page name
         """
-        self._extra_page_name = self.__extra_page_name.get_value()
-        if self._extra_page_name != "":
-            config.set('paths.website-extra-page-name', self._extra_page_name)
+        extra_page_name = self.__extra_page_name.get_value()
+        if extra_page_name != "":
+            config.set('paths.website-extra-page-name', extra_page_name)
 
     def __extra_page_changed(self):
         """
         Update the change of the extra page without extension
         """
-        self._extra_page = self.__extra_page.get_value()
-        if self._extra_page != "":
-            config.set('paths.website-extra-page-uri', self._extra_page)
+        extra_page = self.__extra_page.get_value()
+        if extra_page != "":
+            config.set('paths.website-extra-page-uri', extra_page)
 
     def __archive_changed(self):
         """

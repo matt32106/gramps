@@ -82,7 +82,7 @@ class StatisticsPage(BasePage):
         # set the file name and open file
         output_file, sio = self.report.create_file("statistics")
         result = self.write_header(_("Statistics"))
-        addressbookpage, head, body, outerwrapper = result
+        addressbookpage, dummy_head, dummy_body, outerwrapper = result
         (males,
          females,
          unknown) = self.get_gender(report.database.iter_person_handles())

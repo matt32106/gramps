@@ -59,7 +59,7 @@ import logging
 #------------------------------------------------
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 from gramps.gen.lib import (FamilyRelType, NoteType, NameType, Person,
-                            UrlType, Date, Name, PlaceType, EventRoleType,
+                            UrlType, Name, PlaceType, EventRoleType,
                             Family, Citation, Place)
 from gramps.gen.lib.date import Today
 from gramps.gen.const import PROGRAM_NAME, URL_HOMEPAGE
@@ -235,7 +235,7 @@ class BasePage: # pylint: disable=C1001
         """
         Returns the menu column for Drop Down Menus and Drop Down Citations
         """
-        if len(data_list) == 0:
+        if not data_list:
             return
 
         elif len(data_list) == 1:
@@ -470,6 +470,7 @@ class BasePage: # pylint: disable=C1001
         @param: handle_list  -- handle list from the backlink of
                                 the event_handle
         """
+        dummy_first_person = first_person
         for (classname, handle) in handle_list:
 
             # personal event
@@ -799,7 +800,7 @@ class BasePage: # pylint: disable=C1001
             gid_html = Html("span", " [%s]" % gid, class_="grampsid",
                             inline=True)
         else:
-            gid_html = "" # pylint: disable=redefined-variable-type
+            gid_html = ""
 
         result = self.report.obj_dict.get(Family).get(family_handle)
         if result is None:
@@ -910,6 +911,8 @@ class BasePage: # pylint: disable=C1001
         @param: uplink  -- If True, then "../../../" is inserted in front of
                            the result.
         """
+        dummy_evt_ref = evt_ref
+        dummy_gid = gid
         place = None
         place_handle = evt.get_place_handle()
         if place_handle:
@@ -939,6 +942,7 @@ class BasePage: # pylint: disable=C1001
         @param: ldsobj        -- Either person or family
         @param: ldssealedtype -- Either Sealed to Family or Spouse
         """
+        dummy_ldssealedtype = ldssealedtype
         objectldsord = ldsobj.get_lds_ord_list()
         if not objectldsord:
             return None
@@ -975,7 +979,7 @@ class BasePage: # pylint: disable=C1001
                     place = self.r_db.get_place_from_handle(place_handle)
                     if place:
                         place_title = _pd.display(self.r_db, place)
-                        place_hyper = self.place_link( # pylint: disable=R0204
+                        place_hyper = self.place_link(
                             place_handle, place_title,
                             place.get_gramps_id(), uplink=True)
 
@@ -1005,7 +1009,7 @@ class BasePage: # pylint: disable=C1001
 
         @param: srcattr_list -- List of source attributes
         """
-        if len(srcattr_list) == 0:
+        if not srcattr_list:
             return None
 
         # begin data map division and section title...
@@ -1435,11 +1439,11 @@ class BasePage: # pylint: disable=C1001
         head += links
 
         # Add the script to control the menu
-        menuscript =  Html("<script>function navFunction() { "
-                           "var x = document.getElementById(\"dropmenu\"); "
-                           "if (x.className === \"nav\") { x.className += \""
-                           " responsive\"; } else { x.className = \"nav\"; }"
-                           " }</script>")
+        menuscript = Html("<script>function navFunction() { "
+                          "var x = document.getElementById(\"dropmenu\"); "
+                          "if (x.className === \"nav\") { x.className += \""
+                          " responsive\"; } else { x.className = \"nav\"; }"
+                          " }</script>")
         head += menuscript
 
         # add outerwrapper to set the overall page width
@@ -1451,9 +1455,9 @@ class BasePage: # pylint: disable=C1001
         headerdiv = Html("div", id='header') + (
             Html("<a href=\"javascript:void(0);\" class=\"navIcon\""
                  " onclick=\"navFunction()\">&#8801;</a>")) + (
-            Html("h1", html_escape(self.title_str),
-                 id="SiteTitle", inline=True)
-        )
+                     Html("h1", html_escape(self.title_str),
+                          id="SiteTitle", inline=True)
+                     )
         outerwrapperdiv += headerdiv
 
         header_note = self.report.options['headernote']
@@ -1495,7 +1499,7 @@ class BasePage: # pylint: disable=C1001
         # include repositories or not?
         inc_repos = True
         if (not self.report.inc_repository or
-                not len(self.r_db.get_repository_handles())):
+                not self.r_db.get_repository_handles()):
             inc_repos = False
 
         # create media pages...
@@ -1623,7 +1627,7 @@ class BasePage: # pylint: disable=C1001
         # include repositories or not?
         inc_repos = True
         if (not self.report.inc_repository or
-                not len(self.r_db.get_repository_handles())):
+                not self.r_db.get_repository_handles()):
             inc_repos = False
 
         # create media pages...
@@ -1693,7 +1697,7 @@ class BasePage: # pylint: disable=C1001
                 # add personal column
                 self.get_column_data(unordered, personal, self._("Personal"))
 
-                if len(navs1):
+                if navs1:
                     for url_fname, nav_text in navs1:
                         unordered.extend(
                             Html("li", self.get_nav_menu_hyperlink(url_fname,
@@ -1741,17 +1745,17 @@ class BasePage: # pylint: disable=C1001
             if mime_type and mime_type.startswith("image"):
                 try:
 
-                    newpath, thumb_path = self.report.prepare_copy_media(obj)
+                    newpath, dummy_tpath = self.report.prepare_copy_media(obj)
                     self.report.copy_file(media_path_full(
                         self.r_db, obj.get_path()), newpath)
 
                     # begin image
                     with Html("div", id="GalleryDisplay",
-                                   style='width: auto; height: auto') as image:
+                              style='width: auto; height: auto') as image:
                         if _region_items:
                             # add all regions and links to persons
                             regions = Html("ol", class_="RegionBox")
-                            while len(_region_items) > 0:
+                            while _region_items:
                                 (name, coord_x, coord_y,
                                  width, height, linkurl
                                 ) = _region_items.pop()
@@ -1836,7 +1840,8 @@ class BasePage: # pylint: disable=C1001
                                  self._("Unknown")
                                 )
                         _linkurl = self.report.build_url_fname_html(_obj.handle,
-                                                                    "ppl", linkurl)
+                                                                    "ppl",
+                                                                    linkurl)
             elif classname == "Family":
                 _obj = self.r_db.get_family_from_handle(newhandle)
                 partner1_handle = _obj.get_father_handle()
@@ -1955,7 +1960,7 @@ class BasePage: # pylint: disable=C1001
                                                 usedescr=False)
                 else:
 
-                    real_path, newpath = self.report.prepare_copy_media(photo)
+                    dummy_rpath, newpath = self.report.prepare_copy_media(photo)
                     newpath = self.report.build_url_fname(newpath, uplink=True)
 
                     # FIXME: There doesn't seem to be any point in highlighting
@@ -1968,13 +1973,13 @@ class BasePage: # pylint: disable=C1001
                     # useless!)
                     _region_items = self.media_ref_rect_regions(photo_handle,
                                                                 linkurl=False)
-                    if len(_region_items):
+                    if _region_items:
                         with Html("div", id="GalleryDisplay") as mediadisplay:
                             snapshot += mediadisplay
 
                             ordered = Html("ol", class_="RegionBox")
                             mediadisplay += ordered
-                            while len(_region_items):
+                            while _region_items:
                                 (name, coord_x, coord_y,
                                  width, height, linkurl) = _region_items.pop()
                                 ordered += Html("li",
@@ -2330,47 +2335,6 @@ class BasePage: # pylint: disable=C1001
         # return section to its caller
         return section
 
-    def display_references(self, handlelist,
-                           uplink=False):
-        """
-        Display references for the current objects
-
-        @param: handlelist -- List of handles
-        @param: uplink     -- If True, then "../../../" is inserted in front
-                              of the result.
-        """
-        if not handlelist:
-            return None
-
-        # begin references division and title
-        with Html("div", class_="subsection", id="references") as section:
-            section += Html("h4", self._("References"), inline=True)
-
-            ordered = Html("ol")
-            section += ordered
-            sortlist = sorted(handlelist,
-                              key=lambda x: self.rlocale.sort_key(x[1]))
-
-            for (path, name, gid) in sortlist:
-                list_html = Html("li")
-                ordered += list_html
-
-                name = name or self._("Unknown")
-                if not self.noid and gid != "":
-                    gid_html = Html("span", " [%s]" % gid, class_="grampsid",
-                                    inline=True)
-                else:
-                    gid_html = "" # pylint: disable=redefined-variable-type
-
-                if path != "":
-                    url = self.report.build_url_fname(path, None, self.uplink)
-                    list_html += Html("a", href=url) + name + gid_html
-                else:
-                    list_html += name + str(gid_html)
-
-        # return references division to its caller
-        return section
-
     def family_map_link(self, handle, url):
         """
         Creates a link to the family map
@@ -2378,6 +2342,7 @@ class BasePage: # pylint: disable=C1001
         @param: handle -- The family handle
         @param: url    -- url to be linked
         """
+        dummy_handle = handle
         return Html("a", self._("Family Map"), href=url,
                     title=self._("Family Map"), class_="familymap", inline=True)
 
@@ -2486,7 +2451,7 @@ class BasePage: # pylint: disable=C1001
             gid_html = Html("span", " [%s]" % gid, class_="grampsid",
                             inline=True)
         else:
-            gid_html = "" # pylint: disable=redefined-variable-type
+            gid_html = ""
 
         if link != "":
             url = self.report.build_url_fname(link, uplink=uplink)
@@ -2587,7 +2552,7 @@ class BasePage: # pylint: disable=C1001
         @param: table -- Table from Placedetail
         """
         if place in self.report.visited:
-            return
+            return None
         self.report.visited.append(place)
         # add table body
         tbody = Html("tbody")
@@ -2655,12 +2620,13 @@ class BasePage: # pylint: disable=C1001
         altloc = place.get_alternative_names()
         if altloc:
             tbody += Html("tr") + Html("td", "&nbsp;", colspan=2)
+            date_msg = self._("Date range in which the name is valid.")
             trow = Html("tr") + (
                 Html("th", self._("Alternate Names"), colspan=1,
                      class_="ColumnAttribute", inline=True),
                 Html("th", self._("Language"), colspan=1,
                      class_="ColumnAttribute", inline=True),
-                Html("th", self._("Date range in which the name is valid."), colspan=1,
+                Html("th", date_msg, colspan=1,
                      class_="ColumnAttribute", inline=True),
             )
             tbody += trow
@@ -2722,9 +2688,9 @@ class BasePage: # pylint: disable=C1001
                                 gpfh = self.r_db.get_place_from_handle
                                 eplace = gpfh(placeref.ref)
                                 if not eplace:
-                                   continue
-                                table += Html("tr") + Html("td",
-                                            c_place.get_name().get_value())
+                                    continue
+                                place_name = c_place.get_name().get_value()
+                                table += Html("tr") + Html("td", place_name)
 
             # enclosed by
             with Html("div", class_='subsection encloses') as encloses:
@@ -2740,9 +2706,9 @@ class BasePage: # pylint: disable=C1001
                         visited.append(placeref.ref)
                         pplace = self.r_db.get_place_from_handle(placeref.ref)
                         if not pplace:
-                           continue
-                        table += Html("tr") + Html("td",
-                                    pplace.get_name().get_value())
+                            continue
+                        place_name = pplace.get_name().get_value()
+                        table += Html("tr") + Html("td", place_name)
 
         # enclosed by
         tbody += Html("tr") + Html("td", "&nbsp;")
@@ -2821,7 +2787,7 @@ class BasePage: # pylint: disable=C1001
 
         @param: repo_ref_list -- The list of repositories references
         """
-        if len(repo_ref_list) == 0:
+        if not repo_ref_list:
             return None
         # Repository list division...
         with Html("div", class_="subsection",
@@ -2952,9 +2918,9 @@ class BasePage: # pylint: disable=C1001
                 if len(role.split('-')) > 1:
                     # conver ISO date to Date for translation.
                     if len(role.split(' - ')) > 1:
-                        (d1, d2) = role.split(' - ')
-                        role = self._("between") + " " + d1 + " "
-                        role += self._("and") + " " + d2
+                        (date1, date2) = role.split(' - ')
+                        role = self._("between") + " " + date1 + " "
+                        role += self._("and") + " " + date2
                     date = _dp.parse(role)
                     date = self.rlocale.get_date(date)
                     role = " (%s) " % date
@@ -2972,7 +2938,7 @@ class BasePage: # pylint: disable=C1001
                     gid_html = Html("span", " [%s]" % gid,
                                     class_="grampsid", inline=True)
                 else:
-                    gid_html = "" # pylint: disable=redefined-variable-type
+                    gid_html = ""
                 list_html += Html("a", href=url) + name + role + gid_html
         return ordered
 

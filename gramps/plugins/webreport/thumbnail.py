@@ -110,7 +110,7 @@ class ThumbnailPreviewPage(BasePage):
         # Create thumbnail preview page...
         output_file, sio = self.report.create_file("thumbnails")
         result = self.write_header(self._("Thumbnails"))
-        thumbnailpage, head, body, outerwrapper = result
+        thumbnailpage, dummy_head, body, outerwrapper = result
 
         with Html("div", class_="content", id="Preview") as previewpage:
             outerwrapper += previewpage
@@ -124,40 +124,39 @@ class ThumbnailPreviewPage(BasePage):
                          "will take you to that image&#8217;s page.")
             previewpage += Html("p", msg, id="description")
 
-        message = _("Creating thumbnail preview page...")
         with Html("div", id="gallery") as gallery:
             previewpage += gallery
             index, indexpos = 1, 0
             num_of_images = len(media_list)
             while index <= num_of_images:
-                    ptitle = media_list[indexpos][0]
-                    person_handle = media_list[indexpos][1]
-                    photo = media_list[indexpos][2]
+                ptitle = media_list[indexpos][0]
+                person_handle = media_list[indexpos][1]
+                photo = media_list[indexpos][2]
 
-                    # begin table cell and attach to table row(trow)...
-                    gallerycell = Html("div", class_="gallerycell")
-                    gallery += gallerycell
+                # begin table cell and attach to table row(trow)...
+                gallerycell = Html("div", class_="gallerycell")
+                gallery += gallerycell
 
-                    # attach index number...
-                    numberdiv = Html("div", class_="indexno")
-                    gallerycell += numberdiv
+                # attach index number...
+                numberdiv = Html("div", class_="indexno")
+                gallerycell += numberdiv
 
-                    # attach anchor name to date cell in upper right
-                    # corner of grid...
-                    numberdiv += Html("a", index, name=index, title=index,
-                                      inline=True)
+                # attach anchor name to date cell in upper right
+                # corner of grid...
+                numberdiv += Html("a", index, name=index, title=index,
+                                  inline=True)
 
-                    # create thumbnail
-                    (real_path,
-                     newpath) = self.report.prepare_copy_media(photo)
-                    newpath = self.report.build_url_fname(newpath)
+                # create thumbnail
+                (dummy_real_path,
+                 newpath) = self.report.prepare_copy_media(photo)
+                newpath = self.report.build_url_fname(newpath)
 
-                    # attach thumbnail to list...
-                    gallerycell += self.thumb_hyper_image(newpath, "img",
-                                                          person_handle, ptitle)
+                # attach thumbnail to list...
+                gallerycell += self.thumb_hyper_image(newpath, "img",
+                                                      person_handle, ptitle)
 
-                    index += 1
-                    indexpos += 1
+                index += 1
+                indexpos += 1
 
         # begin Thumbnail Reference section...
         with Html("div", class_="subsection", id="references") as section:

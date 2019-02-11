@@ -75,7 +75,7 @@ class ContactPage(BasePage):
 
         output_file, sio = self.report.create_file("contact")
         result = self.write_header(self._('Contact'))
-        contactpage, head, body, outerwrapper = result
+        contactpage, head, dummy_body, outerwrapper = result
 
         # begin contact division
         with Html("div", class_="content", id="Contact") as section:

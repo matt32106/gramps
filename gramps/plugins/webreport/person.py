@@ -177,7 +177,7 @@ class PersonPages(BasePage):
 
         output_file, sio = self.report.create_file("individuals")
         result = self.write_header(self._("Individuals"))
-        indlistpage, dummy_head, body, outerwrapper = result
+        indlistpage, dummy_head, dummy_body, outerwrapper = result
         date = 0
 
         # begin Individuals division
@@ -466,7 +466,7 @@ class PersonPages(BasePage):
         output_file, sio = self.report.create_file(person.get_handle(), "ppl")
         self.uplink = True
         result = self.write_header(self.sort_name)
-        indivdetpage, head, body, outerwrapper = result
+        indivdetpage, head, dummy_body, outerwrapper = result
 
         # attach the ancestortree style sheet if ancestor
         # graph is being created?
@@ -1762,7 +1762,6 @@ class PersonPages(BasePage):
         return True
 
     def display_step_families(self, parent_handle,
-                              family,
                               all_family_handles,
                               birthmother, birthfather,
                               table):
@@ -1793,11 +1792,11 @@ class PersonPages(BasePage):
         center_person = self.r_db.get_person_from_gramps_id(
             self.report.options['pid'])
         if center_person is None:
-            return
+            return None
         if (int(self.report.options['living_people']) !=
-            LivingProxyDb.MODE_INCLUDE_ALL):
+                LivingProxyDb.MODE_INCLUDE_ALL):
             if probably_alive(center_person, self.r_db, Today()):
-                return
+                return None
         relationship = self.rel_class.get_one_relationship(self.r_db,
                                                            center_person,
                                                            self.person)
@@ -1875,11 +1874,11 @@ class PersonPages(BasePage):
                             # involved. This displays half siblings and step
                             # siblings
                             self.display_step_families(
-                                family.get_father_handle(), family,
+                                family.get_father_handle(),
                                 all_family_handles,
                                 birthmother, birthfather, tbody)
                             self.display_step_families(
-                                family.get_mother_handle(), family,
+                                family.get_mother_handle(),
                                 all_family_handles,
                                 birthmother, birthfather, tbody)
                 table += tbody

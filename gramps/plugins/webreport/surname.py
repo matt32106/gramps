@@ -96,7 +96,7 @@ class SurnamePage(BasePage):
         output_file, sio = self.report.create_file(name_to_md5(surname), "srn")
         self.uplink = True
         result = self.write_header("%s - %s" % (self._("Surname"), surname))
-        surnamepage, head, body, outerwrapper = result
+        surnamepage, dummy_head, dummy_body, outerwrapper = result
         ldatec = 0
 
         # begin SurnameDetail division
@@ -261,7 +261,7 @@ class SurnamePage(BasePage):
                                              class_="father", inline=True)
                             samerow = False
                         else:
-                            tcell = "&nbsp;" # pylint: disable=R0204
+                            tcell = "&nbsp;"
                             samerow = True
                         trow += Html("td", tcell,
                                      class_="ColumnParents", inline=samerow)

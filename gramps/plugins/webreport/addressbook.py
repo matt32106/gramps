@@ -85,7 +85,7 @@ class AddressBookPage(BasePage):
         # set the file name and open file
         output_file, sio = self.report.create_file(person_handle, "addr")
         result = self.write_header(_("Address Book"))
-        addressbookpage, head, body_, outerwrapper = result
+        addressbookpage, dummy_head, dummy_body, outerwrapper = result
 
         # begin address book page division and section title
         with Html("div", class_="content",

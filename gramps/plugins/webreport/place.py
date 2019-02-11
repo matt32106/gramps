@@ -139,7 +139,7 @@ class PlacePages(BasePage):
 
         output_file, sio = self.report.create_file("places")
         result = self.write_header(self._("Places"))
-        placelistpage, head, body, outerwrapper = result
+        placelistpage, dummy_head, dummy_body, outerwrapper = result
         ldatec = 0
         prev_letter = " "
 
@@ -296,7 +296,7 @@ class PlacePages(BasePage):
         """
         place = report.database.get_place_from_handle(place_handle)
         if not place:
-            return None
+            return
         BasePage.__init__(self, report, title, place.get_gramps_id())
         self.bibli = Bibliography()
         place_name = self.report.obj_dict[Place][place_handle][1]

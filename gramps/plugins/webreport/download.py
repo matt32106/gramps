@@ -92,7 +92,7 @@ class DownloadPage(BasePage):
 
             output_file, sio = self.report.create_file("download")
             result = self.write_header(self._('Download'))
-            downloadpage, head, body, outerwrapper = result
+            downloadpage, dummy_head, dummy_body, outerwrapper = result
 
             # begin download page and table
             with Html("div", class_="content", id="Download") as download:

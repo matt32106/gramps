@@ -99,7 +99,7 @@ class SurnameListPage(BasePage):
         else:
             output_file, sio = self.report.create_file("surnames_count")
             result = self.write_header(self._('Surnames by person count'))
-        surnamelistpage, head, body, outerwrapper = result
+        surnamelistpage, dummy_head, dummy_body, outerwrapper = result
 
         # begin surnames division
         with Html("div", class_="content", id="surnames") as surnamelist:

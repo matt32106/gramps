@@ -129,7 +129,7 @@ class FamilyPages(BasePage):
 
         output_file, sio = self.report.create_file("families")
         result = self.write_header(self._("Families"))
-        familieslistpage, head, body_, outerwrapper = result
+        familieslistpage, dummy_head, dummy_body, outerwrapper = result
         ldatec = 0
         prev_letter = " "
 
@@ -330,7 +330,7 @@ class FamilyPages(BasePage):
 
         output_file, sio = self.report.create_file(family.get_handle(), "fam")
         result = self.write_header(family_name)
-        familydetailpage, head, body_, outerwrapper = result
+        familydetailpage, dummy_head, dummy_body, outerwrapper = result
 
         # begin FamilyDetaill division
         with Html("div", class_="content",
