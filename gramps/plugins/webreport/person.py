@@ -1687,7 +1687,15 @@ class PersonPages(BasePage):
                     Html("td", reln, class_="ColumnAttribute", inline=True))
 
                 tcell = Html("td", val1, class_="ColumnValue", inline=True)
-                tcell += self.display_child_link(child_handle)
+                if child == self.person:
+                    name_format = self.report.options['name_format']
+                    primary_name = child.get_primary_name()
+                    name = Name(primary_name)
+                    name.set_display_as(name_format)
+                    ndf = html_escape(_nd.display_name(name))
+                    tcell += Html("b", ndf)
+                else:
+                    tcell += self.display_child_link(child_handle)
 
                 birth = death = ""
                 bd_event = get_birth_or_fallback(self.r_db, child)

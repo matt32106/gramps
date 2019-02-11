@@ -288,12 +288,9 @@ class BasePage: # pylint: disable=C1001
                             family_handle,
                             self.report.obj_dict[Family][family_handle][1],
                             gid=family.get_gramps_id(), uplink=True)
+                        link1 = Html("H4", link, class_="subsection")
                         trow = Html("tr", class_="BeginFamily") + (
-                            Html("td", "&nbsp", class_="ColumnType",
-                                 inline=True),
-                            Html("td", "&nbsp", class_="ColumnAttribute",
-                                 inline=True),
-                            Html("td", link, class_="ColumnValue",
+                            Html("td", link1, class_="ColumnValue", colspan=3,
                                  inline=True)
                         )
                         table += trow

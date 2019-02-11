@@ -1162,6 +1162,15 @@ div#families {
     margin: 0;
     padding: 0;
 }
+div#families .infolist h4 {
+    font: bold 1.2em sans-serif;
+    color: #FFF;
+    padding: 0px 0px 0px 20px;
+    border-width: 4px 0px 4px 0px;
+    border-style: solid;
+    border-color: #00029D;
+    background-color: #13A926;
+}
 div#families table.infolist tbody tr.BeginFamily {
     border-top: solid 1px #000;
 }
