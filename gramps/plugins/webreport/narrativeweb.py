@@ -233,6 +233,7 @@ class NavWebReport(Report):
         self.mapservice = self.options['mapservice']
         self.googleopts = self.options['googleopts']
         self.googlemapkey = self.options['googlemapkey']
+        self.reference_sort = self.options['reference_sort']
 
         if self.use_home:
             self.index_fname = "index"
@@ -825,12 +826,26 @@ class NavWebReport(Report):
         place = self._db.get_place_from_handle(place_handle)
         if place is None:
             return
+        if bkref_class == Person:
+            person = self._db.get_person_from_handle(bkref_handle)
+            name = _nd.display(person)
+        else:
+            family = self._db.get_family_from_handle(bkref_handle)
+            husband_handle = family.get_father_handle()
+            if husband_handle:
+                person = self._db.get_person_from_handle(husband_handle)
+                name = _nd.display(person)
+            else:
+                name = ""
         if config.get('preferences.place-auto'):
             place_name = _pd.display_event(self._db, event)
         else:
             place_name = place.get_title()
         if event:
-            role_or_date = str(event.get_date_object())
+            if self.reference_sort:
+                role_or_date = name
+            else:
+                role_or_date = str(event.get_date_object())
         else:
             role_or_date = ""
         place_fname = self.build_url_fname(place_handle, "plc",
@@ -1772,6 +1787,13 @@ class NavWebOptions(MenuReportOptions):
         coordinates.set_help(
             _('Whether to display latitude/longitude in the places list?'))
         addopt("coordinates", coordinates)
+
+        reference_sort = BooleanOption(
+            _('Sort places references either by date or by name'), False)
+        reference_sort.set_help(
+            _('Sort the places references by date or by name.'
+              ' Not set means by date.'))
+        addopt("reference_sort", reference_sort)
 
         self.__graphgens = NumberOption(_("Graph generations"), 4, 2, 10)
         self.__graphgens.set_help(_("The number of generations to include in "

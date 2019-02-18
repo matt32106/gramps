@@ -140,6 +140,7 @@ class BasePage: # pylint: disable=C1001
         self.extrapage = report.options['extrapage']
         self.extrapagename = report.options['extrapagename']
         self.familymappages = None
+        self.reference_sort = report.options['reference_sort']
         lang = report.options['trans']
         self.rlocale = report.set_locale(lang)
         self._ = self.rlocale.translation.sgettext
@@ -2898,7 +2899,9 @@ class BasePage: # pylint: disable=C1001
             elif obj[2] == "Family":
                 role = "1"
             else:
-                if len(obj[2].split('-')) > 1:
+                if self.reference_sort:
+                    role = obj[2] # name
+                elif len(obj[2].split('-')) > 1:
                     role = obj[2] # date in ISO format
                 else:
                     role = "3"
@@ -2912,7 +2915,9 @@ class BasePage: # pylint: disable=C1001
             name = self.report.obj_dict[bkref_class][bkref_handle][1]
             gid = self.report.obj_dict[bkref_class][bkref_handle][2]
             if role != "":
-                if len(role.split('-')) > 1:
+                if self.reference_sort:
+                    role = ""
+                elif len(role.split('-')) > 1:
                     # conver ISO date to Date for translation.
                     if len(role.split(' - ')) > 1:
                         (date1, date2) = role.split(' - ')
