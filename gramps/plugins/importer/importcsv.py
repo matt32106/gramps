@@ -53,7 +53,8 @@ ngettext = glocale.translation.ngettext # else "nearby" comments are ignored
 from gramps.gen.lib import (ChildRef, Citation, Event, EventRef, EventType,
                             Family, FamilyRelType, Name, NameType, Note,
                             NoteType, Person, Place, Source, Surname, Tag,
-                            PlaceName, PlaceType, PlaceRef)
+                            PlaceName, PlaceType, PlaceRef,
+                            Attribute, AttributeType)
 from gramps.gen.db import DbTxn
 from gramps.gen.datehandler import parser as _dp
 from gramps.gen.utils.string import gender as gender_map
@@ -206,6 +207,22 @@ class CSVParser:
             "grampsid": (_("Gramps ID"), "grampsid", "id", "gramps_id",
                          "gramps id"),
             "person": ("person", _("person"), _("Person")),
+            "occupationdescr": ("occupationdescr", _("occupationdescr"), _("Occupation description")),
+            "occupationdate": ("occupationdate", _("occupationdate"), _("Occupation date")),
+            "occupationplace": ("occupationplace", _("occupationplace"), _("Occupation place")),
+            "occupationplace_id": ("occupationplace_id", _("occupationplace_id"), _("Occupation place id")),
+            "occupationsource": ("occupationsource", _("occupationsource"), _("Occupation source")),
+
+            "residencedate": ("residencedate", _("residencedate"), _("residence date")),
+            "residenceplace": ("residenceplace", _("residenceplace"), _("residence place")),
+            "residenceplace_id": ("residenceplace_id", _("residenceplace_id"), _("residence place id")),
+            "residencesource": ("residencesource", _("residencesource"), _("residence source")),
+
+            "attributetype": ("attributetype", _("attributetype"), _("attribute type")),
+            "attributevalue": ("attributevalue", _("attributevalue"), _("attribute value")),
+            # attribute source: code not complete yet
+            "attributesource": ("attributesource", _("attributesource"), _("attribute source")),
+
             # ----------------------------------
             "child": ("child", _("child"), _("Child")),
             "family": ("family", _("family"), _("Family")),
@@ -588,6 +605,19 @@ class CSVParser:
         deathcause  = rd(line_number, row, col, "deathcause")
         grampsid    = rd(line_number, row, col, "grampsid")
         person_ref  = rd(line_number, row, col, "person")
+        occupationdescr  = rd(line_number, row, col, "occupationdescr")
+        occupationplace  = rd(line_number, row, col, "occupationplace")
+        occupationplace_id  = rd(line_number, row, col, "occupationplace_id")
+        occupationsource  = rd(line_number, row, col, "occupationsource")
+        occupationdate  = rd(line_number, row, col, "occupationdate")
+        residencedate  = rd(line_number, row, col, "residencedate")
+        residenceplace  = rd(line_number, row, col, "residenceplace")
+        residenceplace_id  = rd(line_number, row, col, "residenceplace_id")
+        residencesource  = rd(line_number, row, col, "residencesource")
+        attributetype  = rd(line_number, row, col, "attributetype")
+        attributevalue  = rd(line_number, row, col, "attributevalue")
+        attributesource  = rd(line_number, row, col, "attributesource")
+
         #########################################################
         # if this person already exists, don't create them
         person = self.lookup("person", person_ref)
@@ -762,6 +792,69 @@ class CSVParser:
             # add, if new
             new, source = self.get_or_create_source(source)
             self.find_and_set_citation(person, source)
+
+        # Occupation:
+        # Contrary to the fields above, each line in the csv will add a new occupation
+        if occupationdescr is not None:
+            if occupationdate is not None:
+                occupationdate = _dp.parse(occupationdate)
+            if occupationplace and occupationplace_id:
+                raise Error("Error in person: can't have an occupationplace and an occupationplace_id")
+            if occupationplace is not None:
+                new, occupationplace = self.get_or_create_place(occupationplace)
+            elif occupationplace_id:
+                # better exist already, locally or in database:
+                occupationplace = self.lookup("place", occupationplace_id)
+            if occupationsource is not None:
+                new, occupationsource = self.get_or_create_source(occupationsource)
+            if occupationdate or occupationplace or occupationsource:
+                new, occupation = self.get_or_create_event(person,
+                     EventType.OCCUPATION, occupationdate,
+                     occupationplace, occupationsource, occupationdescr, True)
+                occupation_ref = EventRef()
+                occupation_ref.set_reference_handle( occupation.get_handle())
+                person.add_event_ref( occupation_ref)
+
+        # Residence:
+        # Contrary to the fields above occupation, each line in the csv will add a new occupation
+        if residencedate is not None:
+            residencedate = _dp.parse(residencedate)
+        # I wonder if this should be blocking or if id should take precedence!?
+        # idk so I keep the same code as the code in burial
+        if residenceplace and residenceplace_id:
+            raise Error("Error in person: can't have a residenceplace and a residenceplace_id")
+        if residenceplace is not None:
+            new, residenceplace = self.get_or_create_place(residenceplace)
+        elif residenceplace_id:
+            # better exist already, locally or in database:
+            residenceplace = self.lookup("place", residenceplace_id)
+        if residencesource is not None:
+            new, residencesource = self.get_or_create_source(residencesource)
+        if residencedate or residenceplace or residencesource:
+            new, residence = self.get_or_create_event(person,
+                 EventType.RESIDENCE, residencedate,
+                 residenceplace, residencesource, None, True)
+            residence_ref = EventRef()
+            residence_ref.set_reference_handle( residence.get_handle())
+            person.add_event_ref( residence_ref)
+
+        # Attribute
+        # TODO: code that updates existing custom attribute instead of adding a new one each time
+        if attributevalue is not None:
+            attr = Attribute()
+            if attributetype is None:
+                attributetype = "undefined"
+            attr.set_type((AttributeType.CUSTOM, attributetype))
+            attr.set_value(attributevalue)
+            if attributesource is not None:
+                new, attributesource = self.get_or_create_source(attributesource)
+                #  TODO: code to set the source, don't know how to do that 
+                # attr.set_source(attributesource) does not work 
+                
+                self.find_and_set_citation(attr, attributesource)
+
+            person.add_attribute(attr)
+
         self.db.commit_person(person, self.trans)
 
     def _parse_place(self, line_number, row, col):
@@ -865,28 +958,36 @@ class CSVParser:
         return family
 
     def get_or_create_event(self, object_, type_, date=None, place=None,
-                            source=None):
-        """ Add or find a type event on object """
+                            source=None, descr=None, create_only=False):
+        """
+                new, occupation = self.get_or_create_event(person,
+                     EventType.OCCUPATION, occupationdate,
+                     occupationplace, occupationsource, occupationdescr, True)   
+        """
         # first, see if it exists
         LOG.debug("get_or_create_event")
         ref_list = object_.get_event_ref_list()
         LOG.debug("refs: %s", ref_list)
         # look for a match, and possible correction
-        for ref in ref_list:
-            event = self.db.get_event_from_handle(ref.ref)
-            LOG.debug("   compare event type %s == %s", int(event.get_type()),
-                      type_)
-            if int(event.get_type()) == type_:
-                # Match! Let's update
-                if date:
-                    event.set_date_object(date)
-                if place:
-                    event.set_place_handle(place.get_handle())
-                if source:
-                    self.find_and_set_citation(event, source)
-                self.db.commit_event(event, self.trans)
-                LOG.debug("   returning existing event")
-                return (0, event)
+        # except if create_only is true (for events that can have several occurrences)
+        if not create_only :
+            for ref in ref_list:
+                event = self.db.get_event_from_handle(ref.ref)
+                LOG.debug("   compare event type %s == %s", int(event.get_type()),
+                          type_)
+                if int(event.get_type()) == type_:
+                    # Match! Let's update
+                    if date:
+                        event.set_date_object(date)
+                    if place:
+                        event.set_place_handle(place.get_handle())
+                    if source:
+                        self.find_and_set_citation(event, source)
+                    if descr:
+                        event.set_description(descr)
+                    self.db.commit_event(event, self.trans)
+                    LOG.debug("   returning existing event")
+                    return (0, event)
         # else create it:
         LOG.debug("   creating event")
         event = Event()
@@ -898,6 +999,8 @@ class CSVParser:
             event.set_place_handle(place.get_handle())
         if source:
             self.find_and_set_citation(event, source)
+        if descr:
+            event.set_description(descr)
         self.db.add_event(event, self.trans)
         return (1, event)
 
