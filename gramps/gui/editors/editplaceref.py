@@ -63,13 +63,13 @@ class EditPlaceRef(EditReference):
         #self.place_name_label = self.top.get_object('place_name_label')
         #self.place_name_label.set_text(_('place|Name:'))
 
-        tblref =  self.top.get_object('table64')
+        tblref = self.top.get_object('table64')
         notebook = self.top.get_object('notebook_ref')
         #recreate start page as GrampsTab
         notebook.remove_page(0)
         self.reftab = RefTab(self.dbstate, self.uistate, self.track,
                               _('General'), tblref)
-        tblref =  self.top.get_object('table62')
+        tblref = self.top.get_object('table62')
         notebook = self.top.get_object('notebook')
         #recreate start page as GrampsTab
         notebook.remove_page(0)
@@ -175,8 +175,8 @@ class EditPlaceRef(EditReference):
     def set_latlongitude(self, value):
         try:
             coma = value.index(',')
-            self.longitude.set_text(value[coma+1:])
-            self.latitude.set_text(value[:coma])
+            self.longitude.set_text(value[coma+1:].strip())
+            self.latitude.set_text(value[:coma].strip())
             self.top.get_object("lat_entry").validate(force=True)
             self.top.get_object("lon_entry").validate(force=True)
             self.source.set_latitude(self.latitude.get_value())

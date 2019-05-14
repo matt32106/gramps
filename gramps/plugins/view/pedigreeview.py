@@ -68,6 +68,7 @@ from gramps.gui.utils import color_graph_box, hex_to_rgb_float, is_right_click
 from gramps.gen.constfunc import lin
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.sgettext
+from gramps.gen.utils.symbols import Symbols
 
 #-------------------------------------------------------------------------
 #
@@ -259,6 +260,8 @@ class PersonBoxWidgetCairo(_PersonWidgetBase):
         alh = self.get_allocated_height()
         if not self.textlayout:
             self.textlayout = PangoCairo.create_layout(context)
+            if is_quartz():
+                PangoCairo.context_set_resolution(self.textlayout.get_context(), 72)
             # The following seems like it Should work, but it doesn't
             # font_desc = self.get_style_context().get_property(
             #     "font", Gtk.StateFlags.NORMAL)
@@ -528,11 +531,13 @@ class PedigreeView(NavigationView):
                                 PersonBookmarks, nav_group)
 
         self.dbstate = dbstate
+        self.uistate = uistate
         self.dbstate.connect('database-changed', self.change_db)
         uistate.connect('nameformat-changed', self.person_rebuild)
         uistate.connect('placeformat-changed', self.person_rebuild)
+        uistate.connect('font-changed', self.person_rebuild)
 
-        self.format_helper = FormattingHelper(self.dbstate)
+        self.format_helper = FormattingHelper(self.dbstate, self.uistate)
 
         # Depth of tree.
         self._depth = 1
@@ -565,6 +570,23 @@ class PedigreeView(NavigationView):
         # Default - not show, for mo fast display hight tree
         self.show_unknown_people = self._config.get(
                                 'interface.pedview-show-unknown-people')
+
+        self.func_list.update({
+            '<PRIMARY>J' : self.jump,
+            })
+
+        # use symbols
+        self.symbols = Symbols()
+        self.uistate.connect('font-changed', self.reload_symbols)
+
+    def reload_symbols(self):
+        dth_idx = self.uistate.death_symbol
+        if self.uistate.symbols:
+            self.bth = self.symbols.get_symbol_for_string(self.symbols.SYMBOL_BIRTH)
+            self.dth = self.symbols.get_death_symbol_for_char(dth_idx)
+        else:
+            self.bth = self.symbols.get_symbol_fallback(self.symbols.SYMBOL_BIRTH)
+            self.dth = self.symbols.get_death_symbol_fallback(dth_idx)
 
     def get_handle_from_gramps_id(self, gid):
         """
@@ -831,6 +853,7 @@ class PedigreeView(NavigationView):
     def person_rebuild(self, dummy=None):
         """Callback function for signals of change database."""
         self.format_helper.clear_cache()
+        self.format_helper.reload_symbols()
         self.dirty = True
         if self.active:
             self.rebuild_trees(self.get_active())
@@ -1476,7 +1499,8 @@ class PedigreeView(NavigationView):
             self.cb_build_full_nav_menu(obj, event,
                                         person_handle, family_handle)
             return True
-        elif event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
+        elif (event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS
+                  and event.button == 1):
             self.cb_edit_person(obj, person_handle)
             return True
         return True
@@ -1490,7 +1514,8 @@ class PedigreeView(NavigationView):
         if is_right_click(event):
             self.cb_build_relation_nav_menu(obj, event, family_handle)
             return True
-        elif event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
+        elif (event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS
+                  and event.button == 1):
             self.cb_edit_family(obj, family_handle)
             return True
         return True
@@ -1501,7 +1526,8 @@ class PedigreeView(NavigationView):
         Call function for not full family for mouse left button double click
         on missing persons or call submenu for mouse right click.
         """
-        if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
+        if (event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS
+                and event.button == 1):
             self.cb_add_parents(obj, person_handle, family_handle)
             return True
         elif is_right_click(event):

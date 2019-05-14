@@ -38,7 +38,7 @@ from gramps.gen.const import GRAMPS_LOCALE as glocale
 _ = glocale.translation.gettext
 import re
 import logging
-import collections
+from collections import abc
 LOG = logging.getLogger(".ImportXML")
 
 #-------------------------------------------------------------------------
@@ -538,7 +538,7 @@ class GrampsParser(UpdateCallback):
         self.media_file_map = {}
 
         # List of new name formats and a dict for remapping them
-        self.name_formats  = []
+        self.name_formats = []
         self.name_formats_map = {}
         self.taken_name_format_numbers = [num[0]
                                           for num in self.db.name_formats]
@@ -737,7 +737,7 @@ class GrampsParser(UpdateCallback):
         if (orig_handle in self.import_handles and
                 target in self.import_handles[orig_handle]):
             handle = self.import_handles[handle][target][HANDLE]
-            if not isinstance(prim_obj, collections.Callable):
+            if not isinstance(prim_obj, abc.Callable):
                 # This method is called by a start_<primary_object> method.
                 get_raw_obj_data = {"person": self.db.get_raw_person_data,
                                     "family": self.db.get_raw_family_data,
@@ -780,7 +780,8 @@ class GrampsParser(UpdateCallback):
                 while has_handle_func(handle):
                     handle = create_id()
             self.import_handles[orig_handle] = {target: [handle, False]}
-        if isinstance(prim_obj, collections.Callable): # method is called by a reference
+        # method is called by a reference
+        if isinstance(prim_obj, abc.Callable):
             prim_obj = prim_obj()
         else:
             self.import_handles[orig_handle][target][INSTANTIATED] = True
@@ -874,7 +875,7 @@ class GrampsParser(UpdateCallback):
             handle = create_id()
             while has_handle_func(handle):
                 handle = create_id()
-            if isinstance(prim_obj, collections.Callable):
+            if isinstance(prim_obj, abc.Callable):
                 prim_obj = prim_obj()
             prim_obj.set_handle(handle)
             prim_obj.set_gramps_id(gramps_id)
@@ -1149,6 +1150,8 @@ class GrampsParser(UpdateCallback):
         self.placeobj.title = attrs.get('title', '')
         self.locations = 0
         self.update(self.p.CurrentLineNumber)
+        if self.default_tag:
+            self.placeobj.add_tag(self.default_tag.handle)
         return self.placeobj
 
     def start_location(self, attrs):
@@ -1276,6 +1279,8 @@ class GrampsParser(UpdateCallback):
             self.event.private = bool(attrs.get("priv"))
             self.event.change = int(attrs.get('change', self.change))
             self.info.add('new-object', EVENT_KEY, self.event)
+        if self.default_tag:
+            self.event.add_tag(self.default_tag.handle)
         return self.event
 
     def start_eventref(self, attrs):
@@ -1747,14 +1752,14 @@ class GrampsParser(UpdateCallback):
         key = attrs['key']
         value = attrs['value']
         if type == 'group_as':
-            if self.db.has_name_group_key(key) :
+            if self.db.has_name_group_key(key):
                 present = self.db.get_name_group_mapping(key)
                 if not value == present:
                     msg = _('Your Family Tree groups name "%(key)s" together'
                             ' with "%(parent)s", did not change this grouping to "%(value)s".') % {
                             'key' : key, 'parent' : present, 'value' : value }
                     self.user.warn(_("Gramps ignored a name grouping"), msg)
-            else:
+            elif value != 'None':  # None test fixes file corrupted by 11011
                 self.db.set_name_group_mapping(key, value)
 
     def start_last(self, attrs):
@@ -2089,6 +2094,8 @@ class GrampsParser(UpdateCallback):
                 self.conf if self.__xml_version >= (1, 5, 1)
                 else 0 ) # See bug# 7125
         self.info.add('new-object', CITATION_KEY, self.citation)
+        if self.default_tag:
+            self.citation.add_tag(self.default_tag.handle)
         return self.citation
 
     def start_sourceref(self, attrs):
@@ -2143,6 +2150,8 @@ class GrampsParser(UpdateCallback):
         self.source.private = bool(attrs.get("priv"))
         self.source.change = int(attrs.get('change', self.change))
         self.info.add('new-object', SOURCE_KEY, self.source)
+        if self.default_tag:
+            self.source.add_tag(self.default_tag.handle)
         return self.source
 
     def start_reporef(self, attrs):
@@ -2261,6 +2270,8 @@ class GrampsParser(UpdateCallback):
         self.repo.private = bool(attrs.get("priv"))
         self.repo.change = int(attrs.get('change', self.change))
         self.info.add('new-object', REPOSITORY_KEY, self.repo)
+        if self.default_tag:
+            self.repo.add_tag(self.default_tag.handle)
         return self.repo
 
     def stop_people(self, *tag):
@@ -2343,7 +2354,7 @@ class GrampsParser(UpdateCallback):
             date_value = self.place_name.get_date_object()
 
         start = attrs['start'].split('-')
-        stop  = attrs['stop'].split('-')
+        stop = attrs['stop'].split('-')
 
         try:
             year = int(start[0])

@@ -6,6 +6,7 @@
 # Copyright (C) 2008-2009  Gary Burton
 # Copyright (C) 2009-2012  Doug Blank <doug.blank@gmail.com>
 # Copyright (C) 2011       Tim G L Lyons
+# Copyright (C) 2015-      Serge Noiraud
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -148,6 +149,7 @@ register('behavior.min-generation-years', 13)
 register('behavior.owner-warn', False)
 register('behavior.pop-plugin-status', False)
 register('behavior.recent-export-type', 3)
+register('behavior.runcheck', False)
 register('behavior.spellcheck', False)
 register('behavior.startup', 0)
 register('behavior.surname-guessing', 0)
@@ -281,6 +283,10 @@ register('colors.female-dead', ['#feccf0', '#3a292b'])
 register('colors.unknown-alive', ['#f3dbb6', '#75507B'])
 register('colors.unknown-dead', ['#f3dbb6', '#35103b'])
 register('colors.family', ['#eeeeee', '#454545'])
+register('colors.family-married', ['#eeeeee', '#454545'])
+register('colors.family-unmarried', ['#eeeeee', '#454545'])
+register('colors.family-civil-union', ['#eeeeee', '#454545'])
+register('colors.family-unknown', ['#eeeeee', '#454545'])
 register('colors.family-divorced', ['#ffdede', '#5c3636'])
 register('colors.home-person', ['#bbe68a', '#304918'])
 register('colors.border-male-alive', ['#1f4986', '#171d26'])
@@ -304,6 +310,11 @@ register('researcher.researcher-state', '')
 
 register('plugin.hiddenplugins', [])
 register('plugin.addonplugins', [])
+
+register('utf8.in-use', False)
+register('utf8.available-fonts', [])
+register('utf8.selected-font', "")
+register('utf8.death-symbol', 13)
 
 if __debug__: # enable a simple CLI test to see if the datestrings exist
     register('test.january', _("localized lexeme inflections||January"))

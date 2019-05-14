@@ -86,8 +86,8 @@ class FanChartDescView(fanchartdesc.FanChartDescGrampsGUI, NavigationView):
         self.flipupsidedownname = self._config.get('interface.fanview-flipupsidedownname')
         self.fonttype = self._config.get('interface.fanview-font')
 
-        self.grad_start =  self._config.get('interface.color-start-grad')
-        self.grad_end =  self._config.get('interface.color-end-grad')
+        self.grad_start = self._config.get('interface.color-start-grad')
+        self.grad_end = self._config.get('interface.color-end-grad')
         self.form = self._config.get('interface.fanview-form')
         self.angle_algo = self._config.get('interface.angle-algorithm')
         self.dupcolor = self._config.get('interface.duplicate-color')
@@ -99,6 +99,15 @@ class FanChartDescView(fanchartdesc.FanChartDescGrampsGUI, NavigationView):
 
         self.additional_uis.append(FanChartView.additional_ui)
         self.allfonts = [x for x in enumerate(SystemFonts().get_system_fonts())]
+
+        self.func_list.update({
+            '<PRIMARY>J' : self.jump,
+            })
+        self.uistate.connect('font-changed', self.font_changed)
+
+    def font_changed(self):
+        self.format_helper.reload_symbols()
+        self.update()
 
     def navigation_type(self):
         return 'Person'

@@ -182,8 +182,8 @@ class EditPlace(EditPrimary):
     def set_latlongitude(self, value):
         try:
             coma = value.index(',')
-            self.longitude.set_text(value[coma+1:])
-            self.latitude.set_text(value[:coma])
+            self.longitude.set_text(value[coma+1:].strip())
+            self.latitude.set_text(value[:coma].strip())
             self.top.get_object("lat_entry").validate(force=True)
             self.top.get_object("lon_entry").validate(force=True)
             self.obj.set_latitude(self.latitude.get_value())
@@ -355,7 +355,7 @@ class DeletePlaceQuery:
         self.obj = place
         self.person_list = person_list
         self.family_list = family_list
-        self.event_list  = event_list
+        self.event_list = event_list
 
     def query_response(self):
         place_title = place_displayer.display(self.db, self.obj)

@@ -63,6 +63,7 @@ from gramps.gen.utils.alive import probably_alive
 from gramps.gen.utils.libformatting import FormattingHelper
 from gramps.gen.utils.db import (find_children, find_parents, find_witnessed_people,
                                  get_age, get_timeperiod, preset_name)
+from gramps.gen.constfunc import is_quartz
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 from gramps.gen.const import (
     PIXELS_PER_GENERATION,
@@ -92,6 +93,7 @@ from gramps.gen.const import (
     TYPE_BOX_FAMILY)
 _ = glocale.translation.gettext
 from ..utilscairo import warpPath
+from gramps.gen.utils.symbols import Symbols
 
 # following are used in name_displayer format def
 # (must not conflict with standard defs)
@@ -165,6 +167,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
                             [DdTargets.PERSON_LINK.target()],
                             Gdk.DragAction.COPY)
         self.connect('drag_data_received', self.on_drag_data_received)
+        self.uistate.connect('font-changed', self.reload_symbols)
 
         self._mouse_click = False
         self.rotate_value = 90 # degrees, initially, 1st gen male on right half
@@ -175,6 +178,17 @@ class FanChartBaseWidget(Gtk.DrawingArea):
         #(re)compute everything
         self.reset()
         self.set_size_request(120, 120)
+        self.symbols = Symbols()
+        self.reload_symbols()
+
+    def reload_symbols(self):
+        dth_idx = self.uistate.death_symbol
+        if self.uistate.symbols:
+            self.bth = self.symbols.get_symbol_for_string(self.symbols.SYMBOL_BIRTH)
+            self.dth = self.symbols.get_death_symbol_for_char(dth_idx)
+        else:
+            self.bth = self.symbols.get_symbol_fallback(self.symbols.SYMBOL_BIRTH)
+            self.dth = self.symbols.get_death_symbol_fallback(dth_idx)
 
     def reset(self):
         """
@@ -312,7 +326,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
                                        cend[2]/255)
         if self.background in [BACKGROUND_GENDER, BACKGROUND_SINGLE_COLOR]:
             # nothing to precompute
-            self.colors =  None
+            self.colors = None
             self.maincolor = cstart
         elif self.background == BACKGROUND_GRAD_GEN:
             #compute the colors, -1, 0, ..., maxgen
@@ -325,7 +339,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
             self.colors = [(255*r, 255*g, 255*b) for r, g, b in rgb_colors]
         elif self.background == BACKGROUND_GRAD_PERIOD:
             # we fill in in the data structure what the period is, None if not found
-            self.colors =  None
+            self.colors = None
             self.minperiod = 1e10
             self.maxperiod = -1e10
             gen_people = self.people_generator()
@@ -357,7 +371,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
 
         elif self.background == BACKGROUND_GRAD_AGE:
             # we fill in in the data structure what the color age is, white if no age
-            self.colors =  None
+            self.colors = None
             gen_people = self.people_generator()
             for person, userdata in gen_people:
                 self.set_userdata_age(person, userdata)
@@ -570,7 +584,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
             #we are not in a move, so draw text
             radial = False
             if self.radialtext: ## and generation >= 6:
-                space_arc_text =  (radiusin+radiusout)/2 * (stop_rad-start_rad)
+                space_arc_text = (radiusin+radiusout)/2 * (stop_rad-start_rad)
                 # is there more space to print it radial ?
                 radial= (space_arc_text < (radiusout-radiusin) * 1.1)
             self.draw_person_text(cr, person, radiusin, radiusout, start_rad, stop_rad,
@@ -581,8 +595,14 @@ class FanChartBaseWidget(Gtk.DrawingArea):
                   radial=False, fontcolor=(0, 0, 0), bold=False, can_flip = True):
         if not person: return
         draw_radial = radial and self.radialtext
+        try:
+            alive = probably_alive(person, self.dbstate.db)
+        except RuntimeError:
+            alive = False
         if not self.twolinename:
             name=name_displayer.display(person)
+            if self.uistate.symbols and not alive:
+                    name = self.dth + ' ' + name
             self.draw_text(cr, name, radiusin, radiusout, start, stop, draw_radial,
                        fontcolor, bold)
         else:
@@ -655,7 +675,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
         Display text at a particular radius, between start_rad and stop_rad
         radians.
         """
-        font = Pango.FontDescription(self.fontdescr)
+        font = Pango.FontDescription("")
         fontsize = self.fontsize
         font.set_size(fontsize * Pango.SCALE)
         if bold:
@@ -670,6 +690,8 @@ class FanChartBaseWidget(Gtk.DrawingArea):
 
     def draw_radial_text(self, cr, text, radiusin, radiusout, start_rad, stop_rad, font, flipped):
         layout = self.create_pango_layout(text)
+        if is_quartz():
+            PangoCairo.context_set_resolution(layout.get_context(), 72)
         layout.set_font_description(font)
         layout.set_wrap(Pango.WrapMode.WORD_CHAR)
 
@@ -701,6 +723,8 @@ class FanChartBaseWidget(Gtk.DrawingArea):
         Text not fitting a single line will be char-wrapped away.
         """
         layout = self.create_pango_layout(text)
+        if is_quartz():
+            PangoCairo.context_set_resolution(layout.get_context(), 72)
         layout.set_font_description(font)
         layout.set_wrap(Pango.WrapMode.WORD_CHAR)
 
@@ -762,7 +786,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
 
         cr.translate(-self.center_xy[0], -self.center_xy[1])
 
-        font = Pango.FontDescription(self.fontdescr)
+        font = Pango.FontDescription("")
         fontsize = self.fontsize
         font.set_size(fontsize * Pango.SCALE)
         for color, text in zip(self.gradcol, self.gradval):
@@ -771,6 +795,8 @@ class FanChartBaseWidget(Gtk.DrawingArea):
             cr.set_source_rgb(color[0], color[1], color[2])
             cr.fill()
             layout = self.create_pango_layout(text)
+            if is_quartz():
+                PangoCairo.context_set_resolution(layout.get_context(), 72)
             layout.set_font_description(font)
             cr.move_to(startw+gradwidth+4, starth)
             cr.set_source_rgb(0, 0, 0) #black
@@ -906,7 +932,7 @@ class FanChartBaseWidget(Gtk.DrawingArea):
         self._mouse_click = False
         if self.last_x is None or self.last_y is None:
             # while mouse is moving, we must update the tooltip based on person
-            cell_address =  self.cell_address_under_cursor(event.x, event.y)
+            cell_address = self.cell_address_under_cursor(event.x, event.y)
             self.mouse_x, self.mouse_y = event.x, event.y
             tooltip = ""
             if cell_address:
@@ -1498,7 +1524,11 @@ class FanChartGrampsGUI:
         """
         self.fan = None
         self.on_childmenu_changed = on_childmenu_changed
-        self.format_helper = FormattingHelper(self.dbstate)
+        self.format_helper = FormattingHelper(self.dbstate, self.uistate)
+        self.uistate.connect('font-changed', self.reload_symbols)
+
+    def reload_symbols(self):
+        self.format_helper.reload_symbols()
 
     def set_fan(self, fan):
         """

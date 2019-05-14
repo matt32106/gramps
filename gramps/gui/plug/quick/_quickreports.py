@@ -39,7 +39,7 @@ from io import StringIO
 #
 #------------------------------------------------------------------------
 import logging
-import collections
+from collections import abc
 log = logging.getLogger(".quickreports")
 
 #-------------------------------------------------------------------------
@@ -105,9 +105,9 @@ def create_web_connect_menu(dbstate, uistate, nav_group, handle, prefix):
     pmgr = GuiPluginManager.get_instance()
     plugins = pmgr.process_plugin_data('WebConnect')
     try:
-        connections = [plug(nav_group) if isinstance(plug, collections.Callable) else plug
-                       for plug in plugins]
-    except:
+        connections = [plug(nav_group) if isinstance(plug, abc.Callable) else
+                       plug for plug in plugins]
+    except BaseException:
         import traceback
         traceback.print_exc()
         connections = []
@@ -246,7 +246,7 @@ def run_report(dbstate, uistate, category, handle, pdata, container=None,
         if not mod:
             print("QuickView Error: plugin does not load")
             return
-        func =  getattr(mod, pdata.runfunc)
+        func = getattr(mod, pdata.runfunc)
         if handle:
             d = TextBufDoc(make_basic_stylesheet(), None, track=track)
             d.dbstate = dbstate

@@ -43,7 +43,7 @@ import codecs
 #
 #------------------------------------------------------------------------
 import logging
-import collections
+from collections import abc
 LOG = logging.getLogger(".ExportCSV")
 
 #-------------------------------------------------------------------------
@@ -76,7 +76,7 @@ def exportData(database, filename, user, option_box=None):
 #-------------------------------------------------------------------------
 def sortable_string_representation(text):
     numeric = ""
-    alpha   = ""
+    alpha = ""
     for s in text:
         if s.isdigit():
             numeric += s
@@ -173,7 +173,7 @@ class CSVWriter:
         self.option_box = option_box
         self.filename = filename
         self.user = user
-        if isinstance(self.user.callback, collections.Callable): # callback is really callable
+        if isinstance(self.user.callback, abc.Callable):  # is really callable
             self.update = self.update_real
         else:
             self.update = self.update_empty

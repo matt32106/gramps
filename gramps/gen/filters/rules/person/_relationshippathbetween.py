@@ -42,9 +42,9 @@ class RelationshipPathBetween(Rule):
     """Rule that checks for a person that is a descendant of a specified person
     not more than N generations away"""
 
-    labels      = [ _('ID:'), _('ID:') ]
-    name        = _("Relationship path between <persons>")
-    category    = _('Relationship filters')
+    labels = [ _('ID:'), _('ID:') ]
+    name = _("Relationship path between <persons>")
+    category = _('Relationship filters')
     description = _("Matches the ancestors of two persons back "
                     "to a common ancestor, producing the relationship "
                     "path between two persons.")
@@ -75,6 +75,8 @@ class RelationshipPathBetween(Rule):
                         self.desc_list(child_ref.ref, map, 0)
 
     def apply_filter(self, rank, handle, plist, pmap):
+        if not handle:
+            return
         person = self.db.get_person_from_handle(handle)
         if person is None:
             return

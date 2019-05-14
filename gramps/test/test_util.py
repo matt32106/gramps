@@ -37,6 +37,8 @@ from gramps.cli.grampscli import CLIManager
 from gramps.cli.argparser import ArgParser
 from gramps.cli.arghandler import ArgHandler
 from gramps.gen.const import USER_DIRLIST
+from gramps.gen.filters import reload_custom_filters
+reload_custom_filters()  # so reports with filter options don't fail
 
 # _caller_context is primarily here to support and document the process
 # of determining the test-module's directory.
@@ -62,7 +64,7 @@ def _caller_context():
 #     so, always take the abspath.
 def _caller_dir():
     """Return directory of caller function (caller outside this module)"""
-    tb =  _caller_context()
+    tb = _caller_context()
     return os.path.dirname(os.path.abspath(tb[0]))
 
 

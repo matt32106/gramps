@@ -269,9 +269,7 @@ class EditPerson(EditPrimary):
         self._add_db_signal('family-delete', self.family_change)
         self._add_db_signal('family-update', self.family_change)
         self._add_db_signal('family-add', self.family_change)
-        self._add_db_signal('event-update', self.event_updated)
         self._add_db_signal('event-rebuild', self.event_updated)
-        self._add_db_signal('event-delete', self.event_updated)
 
     def family_change(self, handle_list=[]):
         """
@@ -610,7 +608,8 @@ class EditPerson(EditPrimary):
         main form.
 
         """
-        if event.type == Gdk.EventType._2BUTTON_PRESS and event.button == 1:
+        if (event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS
+                and event.button == 1):
 
             media_list = self.obj.get_media_list()
             if media_list:

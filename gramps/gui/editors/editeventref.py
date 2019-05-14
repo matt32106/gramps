@@ -81,13 +81,13 @@ class EditEventRef(EditReference):
         self.share_btn = self.top.get_object('share_place')
         self.add_del_btn = self.top.get_object('add_del_place')
 
-        tblref =  self.top.get_object('table64')
+        tblref = self.top.get_object('table64')
         notebook = self.top.get_object('notebook_ref')
         #recreate start page as GrampsTab
         notebook.remove_page(0)
         self.reftab = RefTab(self.dbstate, self.uistate, self.track,
                               _('General'), tblref)
-        tblref =  self.top.get_object('table62')
+        tblref = self.top.get_object('table62')
         notebook = self.top.get_object('notebook')
         #recreate start page as GrampsTab
         notebook.remove_page(0)
@@ -120,6 +120,8 @@ class EditEventRef(EditReference):
         """
         self._add_db_signal('event-rebuild', self.close)
         self._add_db_signal('event-delete', self.check_for_close)
+        self._add_db_signal('place-delete', self.place_delete)
+        self._add_db_signal('place-update', self.place_update)
 
     def _setup_fields(self):
 
@@ -279,3 +281,20 @@ class EditEventRef(EditReference):
             self.update(self.source_ref,self.source)
 
         self.close()
+
+    def place_update(self, hndls):
+        ''' Place changed outside of dialog, update text if its ours '''
+        handle = self.source.get_place_handle()
+        if handle and handle in hndls:
+            place = self.db.get_place_from_handle(handle)
+            p_lbl = "%s [%s]" % (place.get_title(), place.gramps_id)
+            self.top.get_object("eer_place").set_text(p_lbl)
+
+    def place_delete(self, hndls):
+        ''' Place deleted outside of dialog, remove it if its ours'''
+        handle = self.source.get_place_handle()
+        if handle and handle in hndls:
+            self.source.set_place_handle(None)
+            self.top.get_object("eer_place").set_markup(
+                self.place_field.EMPTY_TEXT)
+            self.place_field.set_button(False)

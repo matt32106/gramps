@@ -78,14 +78,14 @@ class FanChartView(fanchart.FanChartGrampsGUI, NavigationView):
         #set needed values
         self.maxgen = self._config.get('interface.fanview-maxgen')
         self.background = self._config.get('interface.fanview-background')
-        self.childring =  self._config.get('interface.fanview-childrenring')
+        self.childring = self._config.get('interface.fanview-childrenring')
         self.radialtext = self._config.get('interface.fanview-radialtext')
         self.twolinename = self._config.get('interface.fanview-twolinename')
         self.flipupsidedownname = self._config.get('interface.fanview-flipupsidedownname')
         self.fonttype = self._config.get('interface.fanview-font')
 
-        self.grad_start =  self._config.get('interface.color-start-grad')
-        self.grad_end =  self._config.get('interface.color-end-grad')
+        self.grad_start = self._config.get('interface.color-start-grad')
+        self.grad_end = self._config.get('interface.color-end-grad')
         self.form = self._config.get('interface.fanview-form')
         self.generic_filter = None
         self.alpha_filter = 0.2
@@ -95,6 +95,15 @@ class FanChartView(fanchart.FanChartGrampsGUI, NavigationView):
 
         self.additional_uis.append(self.additional_ui)
         self.allfonts = [x for x in enumerate(SystemFonts().get_system_fonts())]
+
+        self.func_list.update({
+            '<PRIMARY>J' : self.jump,
+            })
+        self.uistate.connect('font-changed', self.font_changed)
+
+    def font_changed(self):
+        self.format_helper.reload_symbols()
+        self.update()
 
     def navigation_type(self):
         return 'Person'

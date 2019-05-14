@@ -52,8 +52,8 @@ from ...selectors import SelectorFactory
 class EventEmbedList(DbGUIElement, GroupEmbeddedList):
 
     _HANDLE_COL = 8
-    _DND_TYPE   = DdTargets.EVENTREF
-    _DND_EXTRA  = DdTargets.EVENT
+    _DND_TYPE = DdTargets.EVENTREF
+    _DND_EXTRA = DdTargets.EVENT
     _WORKGROUP = EventRefModel._ROOTINDEX
 
     _WORKNAME = _("Family")
@@ -131,15 +131,15 @@ class EventEmbedList(DbGUIElement, GroupEmbeddedList):
             refs = self.get_data()[self._WORKGROUP]
             ref_list = [eref.ref for eref in refs]
             indexlist = []
-            last = 0
+            last = -1
             while True:
                 try:
-                    last = ref_list.index(handle)
+                    last = ref_list.index(handle, last + 1)
                     indexlist.append(last)
                 except ValueError:
                     break
             #remove the deleted workgroup events from the object
-            for index in indexlist.reverse():
+            for index in reversed(indexlist):
                 del refs[index]
         #now rebuild the display tab
         self.rebuild_callback()
